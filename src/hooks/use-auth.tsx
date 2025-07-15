@@ -2,8 +2,8 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import { app } from '@/lib/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { auth } from '@/lib/firebase'; // Use the initialized auth instance
 import { usePathname, useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -21,7 +21,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Auth state listener (runs once on mount)
   useEffect(() => {
-    const auth = getAuth(app);
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -39,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (user && isPublicRoute) {
       router.replace('/'); // Use replace to prevent history buildup
-    } else if (!user && !isPublicRoute) {
+    } else if (!user && !isPublic_route) {
       router.replace('/login');
     }
   }, [loading, pathname, router, user?.uid]); // Use user.uid for stability

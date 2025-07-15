@@ -1,8 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, Timestamp } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -14,33 +13,12 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// --- App Initialization with Safety Check ---
-
-let app;
-let db;
-
-// Check if all required environment variables are present
-const areFirebaseVarsDefined = 
-  firebaseConfig.apiKey &&
-  firebaseConfig.authDomain &&
-  firebaseConfig.projectId;
-
-if (!areFirebaseVarsDefined) {
-  console.warn(`
-    ###########################################################################
-    # ATTENZIONE: Variabili d'ambiente Firebase non configurate.              #
-    # L'applicazione non si connetterà a Firebase.                            #
-    # Copia .env.example in .env e inserisci le tue chiavi Firebase.          #
-    ###########################################################################
-  `);
-  // Use dummy objects if not configured, to avoid crashing the app
-  app = null;
-  db = null;
-} else {
-  // Initialize Firebase only if config is valid
-  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-  db = getFirestore(app!);
-}
+// --- App Initialization ---
+// This robust initialization prevents re-initialization on hot reloads
+// and ensures Firebase is ready for use.
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const db = getFirestore(app);
+const auth = getAuth(app);
 
 
-export { app, db, Timestamp };
+export { app, db, auth, Timestamp };
