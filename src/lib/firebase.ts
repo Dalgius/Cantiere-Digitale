@@ -14,8 +14,33 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+// --- App Initialization with Safety Check ---
+
+let app;
+let db;
+
+// Check if all required environment variables are present
+const areFirebaseVarsDefined = 
+  firebaseConfig.apiKey &&
+  firebaseConfig.authDomain &&
+  firebaseConfig.projectId;
+
+if (!areFirebaseVarsDefined) {
+  console.warn(`
+    ###########################################################################
+    # ATTENZIONE: Variabili d'ambiente Firebase non configurate.              #
+    # L'applicazione non si connetterà a Firebase.                            #
+    # Copia .env.example in .env e inserisci le tue chiavi Firebase.          #
+    ###########################################################################
+  `);
+  // Use dummy objects if not configured, to avoid crashing the app
+  app = null;
+  db = null;
+} else {
+  // Initialize Firebase only if config is valid
+  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+  db = getFirestore(app!);
+}
+
 
 export { app, db, Timestamp };
