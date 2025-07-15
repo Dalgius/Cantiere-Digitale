@@ -10,11 +10,14 @@ import { app } from './firebase';
 
 
 // Helper function to get current user's UID server-side
-async function getCurrentUserId(): Promise<string | null> {
-    // This is a placeholder for a more robust server-side auth check
-    // In a real app, you might get the user from the session or a token.
-    // For this context, we assume a user is logged in, but this needs refinement for production.
-    return 'user-placeholder'; // This should be replaced with actual user management
+// This is a placeholder and in a real app would need a more robust solution
+// for getting the currently signed-in user on the server.
+function getCurrentUserId(): string | null {
+    const auth = getAuth(app);
+    // On the server, getAuth().currentUser is not reliable.
+    // This is a simplified approach for this app's context.
+    // A production app would use session cookies or other mechanisms.
+    return 'user-placeholder'; 
 }
 
 
