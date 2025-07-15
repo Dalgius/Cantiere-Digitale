@@ -17,10 +17,11 @@ export default function DashboardPage() {
   const [projects, setProjects] = useState<Project[] | null>(null);
 
   useEffect(() => {
-    // Solo se l'autenticazione è terminata e l'utente esiste
+    // Only fetch if authentication is done and we have a user
     if (!authLoading && user) {
       const fetchProjects = async () => {
         try {
+          // Now we can be sure we're fetching projects for the logged-in user.
           const userProjects = await getProjects();
           setProjects(userProjects || []); // Ensure array fallback
         } catch (error) {
@@ -30,9 +31,9 @@ export default function DashboardPage() {
       };
       fetchProjects();
     }
-  }, [authLoading, user?.uid]); // Dipendenza stabile
+  }, [authLoading, user]); 
 
-  // Mostra il loader principale finché l'autenticazione non è stata verificata
+  // Show a loader while authentication is being checked
   if (authLoading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center">
@@ -41,13 +42,13 @@ export default function DashboardPage() {
     );
   }
 
-  // Se l'utente non è loggato, AuthProvider gestirà il reindirizzamento
-  // Mostra null per evitare rendering flash di contenuti protetti
+  // If there's no user, the AuthProvider will handle the redirect.
+  // Return null to avoid a flash of the dashboard.
   if (!user) {
     return null;
   }
 
-  // L'utente è loggato, mostra la dashboard
+  // User is logged in, show the dashboard
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -62,7 +63,7 @@ export default function DashboardPage() {
             </Button>
           </div>
           
-          {/* Se i progetti sono null, significa che il caricamento è in corso */}
+          {/* While projects are loading, show skeletons */}
           {projects === null ? (
              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <Skeleton className="h-56 w-full" />

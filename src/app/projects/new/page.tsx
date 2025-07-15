@@ -12,10 +12,12 @@ import { useToast } from '@/hooks/use-toast';
 import { addProject } from '@/lib/data-service';
 import type { Project } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function NewProjectPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -31,6 +33,16 @@ export default function NewProjectPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!user) {
+        toast({
+            variant: 'destructive',
+            title: 'Utente non autenticato',
+            description: 'Devi essere loggato per creare un progetto.',
+        });
+        return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -45,14 +57,14 @@ export default function NewProjectPage() {
         return;
       }
 
-      const newProjectData: Omit<Project, 'id' | 'stakeholders'> = {
+      const newProjectData: Omit<Project, 'id' | 'stakeholders' | 'ownerId'> = {
         name: formData.name,
         client: formData.client,
         contractor: formData.contractor,
         description: formData.description,
       };
       
-      const newProject = await addProject(newProjectData);
+      const newProject = await addProject(newProjectData, user.uid);
       
       toast({
         title: 'Progetto Creato!',
@@ -111,7 +123,7 @@ export default function NewProjectPage() {
               />
             </div>
             <div className="flex justify-end">
-              <Button type="submit" disabled={isLoading}>
+              <Button type="submit" disabled={isLoading || !user}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoading ? 'Creazione...' : 'Crea Progetto'}
               </Button>

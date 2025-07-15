@@ -13,6 +13,7 @@ export type Project = {
   client: string;
   contractor: string;
   stakeholders: Stakeholder[];
+  ownerId: string; // The UID of the user who created the project
 };
 
 export type Weather = {

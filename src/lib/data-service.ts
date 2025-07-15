@@ -5,38 +5,30 @@ import { db, Timestamp } from '@/lib/firebase';
 import type { DailyLog, Project } from '@/lib/types';
 import { collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { stakeholders } from './data';
-import { getAuth } from 'firebase/auth';
-import { app } from './firebase';
 
-
-// Helper function to get current user's UID server-side
-// This is a placeholder and in a real app would need a more robust solution
-// for getting the currently signed-in user on the server.
-function getCurrentUserId(): string | null {
-    const auth = getAuth(app);
-    // On the server, getAuth().currentUser is not reliable.
-    // This is a simplified approach for this app's context.
-    // A production app would use session cookies or other mechanisms.
-    return 'user-placeholder'; 
+// Helper function to convert Firestore snapshots to Project objects
+function snapshotToProject(doc: any): Project {
+    const data = doc.data();
+    // Explicitly exclude stakeholders to keep the dashboard payload light for list view
+    const { stakeholders, ...rest } = data;
+    return { id: doc.id, ...rest } as Project;
 }
 
-
+// Retrieves all projects, can be used for admin purposes or if no user filter is needed.
 export async function getProjects(): Promise<Project[]> {
     try {
         const projectsCol = collection(db, 'projects');
         const projectSnapshot = await getDocs(projectsCol);
 
-        const projectList = projectSnapshot.docs.map(doc => {
-            const data = doc.data();
-            // Explicitly exclude stakeholders to keep the dashboard payload light
-            const { stakeholders, ...rest } = data;
-            return { id: doc.id, ...rest } as Project;
-        });
-
+        if (projectSnapshot.empty) {
+            return [];
+        }
+        
+        const projectList = projectSnapshot.docs.map(snapshotToProject);
         return projectList;
     } catch (error) {
         console.error("Error fetching projects:", error);
-        return [];
+        throw new Error("Impossibile recuperare i progetti.");
     }
 }
 
@@ -134,11 +126,12 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
 }
 
 
-export async function addProject(projectData: Omit<Project, 'id' | 'stakeholders'>): Promise<Project> {
+export async function addProject(projectData: Omit<Project, 'id' | 'stakeholders' | 'ownerId'>, ownerId: string): Promise<Project> {
     const projectsCol = collection(db, 'projects');
     
     const projectToAdd = {
         ...projectData,
+        ownerId: ownerId, // Track who owns the project
         stakeholders: Object.values(stakeholders) // Add default stakeholders on creation
     };
     
