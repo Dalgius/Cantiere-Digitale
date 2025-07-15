@@ -1,0 +1,154 @@
+// src/lib/data-service.ts
+'use server';
+
+import { db, Timestamp } from '@/lib/firebase';
+import type { DailyLog, Project } from '@/lib/types';
+import { collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { stakeholders } from './data';
+import { getAuth } from 'firebase/auth';
+import { app } from './firebase';
+
+
+// Helper function to get current user's UID server-side
+async function getCurrentUserId(): Promise<string | null> {
+    // This is a placeholder for a more robust server-side auth check
+    // In a real app, you might get the user from the session or a token.
+    // For this context, we assume a user is logged in, but this needs refinement for production.
+    return 'user-placeholder'; // This should be replaced with actual user management
+}
+
+
+export async function getProjects(): Promise<Project[]> {
+    try {
+        const projectsCol = collection(db, 'projects');
+        const projectSnapshot = await getDocs(projectsCol);
+
+        const projectList = projectSnapshot.docs.map(doc => {
+            const data = doc.data();
+            // Explicitly exclude stakeholders to keep the dashboard payload light
+            const { stakeholders, ...rest } = data;
+            return { id: doc.id, ...rest } as Project;
+        });
+
+        return projectList;
+    } catch (error) {
+        console.error("Error fetching projects:", error);
+        return [];
+    }
+}
+
+
+export async function getProject(id: string): Promise<Project | null> {
+    try {
+        const projectRef = doc(db, 'projects', id);
+        const projectSnap = await getDoc(projectRef);
+
+        if (!projectSnap.exists()) {
+            return null;
+        }
+        
+        const data = projectSnap.data();
+        return { id: projectSnap.id, ...data } as Project;
+    } catch (error) {
+        console.error(`Error fetching project ${id}:`, error);
+        return null;
+    }
+}
+
+
+export async function getDailyLogsForProject(projectId: string): Promise<DailyLog[]> {
+    try {
+        const logsCol = collection(db, `projects/${projectId}/dailyLogs`);
+        const logSnapshot = await getDocs(logsCol);
+
+        const logList = logSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                ...data,
+                id: doc.id,
+                date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date),
+                annotations: (data.annotations || []).map((anno: any) => ({
+                    ...anno,
+                    timestamp: anno.timestamp instanceof Timestamp ? anno.timestamp.toDate() : new Date(anno.timestamp),
+                })),
+            } as DailyLog;
+        });
+        
+        return logList;
+    } catch (error) {
+        console.error(`Error fetching logs for project ${projectId}:`, error);
+        return [];
+    }
+}
+
+
+export async function getDailyLog(projectId: string, date: string): Promise<DailyLog | null> {
+    try {
+        const logId = date;
+        const logRef = doc(db, `projects/${projectId}/dailyLogs`, logId);
+        const logSnap = await getDoc(logRef);
+
+        if (!logSnap.exists()) {
+            return null;
+        }
+
+        const data = logSnap.data();
+        
+        const processedData: DailyLog = {
+            id: logSnap.id,
+            date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date),
+            weather: data.weather,
+            annotations: (data.annotations || []).map((anno: any) => ({
+                ...anno,
+                timestamp: anno.timestamp instanceof Timestamp ? anno.timestamp.toDate() : new Date(anno.timestamp),
+            })),
+            resources: data.resources || [],
+            isValidated: data.isValidated || false,
+        };
+       
+        return processedData;
+    } catch (error) {
+        console.error(`Error fetching log for project ${projectId}, date ${date}:`, error);
+        return null;
+    }
+}
+
+export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'id'>): Promise<void> {
+    const logId = new Date(logData.date).toISOString().split('T')[0];
+    const logRef = doc(db, `projects/${projectId}/dailyLogs`, logId);
+    
+    // Create a safe, serializable object for Firestore
+    const logToSave = {
+      ...logData,
+      date: Timestamp.fromDate(new Date(logData.date)),
+      annotations: (logData.annotations || []).map(anno => ({
+        ...anno,
+        timestamp: anno.timestamp ? Timestamp.fromDate(new Date(anno.timestamp)) : Timestamp.now(),
+      })),
+    };
+    
+    await setDoc(logRef, logToSave, { merge: true });
+}
+
+
+export async function addProject(projectData: Omit<Project, 'id' | 'stakeholders'>): Promise<Project> {
+    const projectsCol = collection(db, 'projects');
+    
+    const projectToAdd = {
+        ...projectData,
+        stakeholders: Object.values(stakeholders) // Add default stakeholders on creation
+    };
+    
+    const docRef = await addDoc(projectsCol, projectToAdd);
+    
+    return {
+        id: docRef.id,
+        ...projectToAdd,
+    };
+}
+
+export async function deleteProject(projectId: string): Promise<void> {
+    const projectRef = doc(db, 'projects', projectId);
+    // Note: This doesn't delete subcollections. A Cloud Function would be needed for that in production.
+    await deleteDoc(projectRef);
+}
