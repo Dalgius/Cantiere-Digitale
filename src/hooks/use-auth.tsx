@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (user && isPublicRoute) {
       router.replace('/'); // Use replace to prevent history buildup
-    } else if (!user && !isPublic_route) {
+    } else if (!user && !isPublicRoute) {
       router.replace('/login');
     }
   }, [loading, pathname, router, user?.uid]); // Use user.uid for stability
