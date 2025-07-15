@@ -7,7 +7,7 @@ import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/dashboard/project-card";
 import Link from "next/link";
-import { getProjects } from "@/lib/data-service";
+import { getProjectsByOwner } from "@/lib/data-service";
 import type { Project } from '@/lib/types';
 import { Header } from '@/components/layout/header';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -15,26 +15,36 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [projects, setProjects] = useState<Project[] | null>(null);
+  const [projectsLoading, setProjectsLoading] = useState(true);
 
   useEffect(() => {
-    // Only fetch if authentication is done and we have a user
-    if (!authLoading && user) {
+    if (authLoading) {
+      // Wait for authentication to finish
+      return;
+    }
+
+    if (user) {
       const fetchProjects = async () => {
+        setProjectsLoading(true);
         try {
-          // Now we can be sure we're fetching projects for the logged-in user.
-          const userProjects = await getProjects();
+          const userProjects = await getProjectsByOwner(user.uid);
           setProjects(userProjects || []); // Ensure array fallback
         } catch (error) {
           console.error("Failed to fetch projects:", error);
           setProjects([]); // Fallback to empty array on error
+        } finally {
+          setProjectsLoading(false);
         }
       };
       fetchProjects();
+    } else {
+      // No user, no projects to load
+      setProjectsLoading(false);
     }
-  }, [authLoading, user]); 
+  }, [authLoading, user]);
 
-  // Show a loader while authentication is being checked
-  if (authLoading) {
+  // Combined loading state: show loader if either auth or projects are loading.
+  if (authLoading || (user && projectsLoading)) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -48,7 +58,7 @@ export default function DashboardPage() {
     return null;
   }
 
-  // User is logged in, show the dashboard
+  // User is logged in, and projects are loaded (or failed to load).
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -62,35 +72,26 @@ export default function DashboardPage() {
               </Link>
             </Button>
           </div>
-          
-          {/* While projects are loading, show skeletons */}
-          {projects === null ? (
-             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <Skeleton className="h-56 w-full" />
-                <Skeleton className="h-56 w-full" />
-                <Skeleton className="h-56 w-full" />
-             </div>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {projects.length > 0 ? (
-                projects.map((project) => (
-                  <ProjectCard key={project.id} project={project} />
-                ))
-              ) : (
-                <div className="md:col-span-2 lg:col-span-3 text-center py-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center">
-                  <h3 className="text-xl font-medium font-headline">Nessun progetto trovato</h3>
-                  <p className="text-muted-foreground mt-2 mb-4 max-w-sm">
-                    Inizia creando un nuovo progetto per gestire il tuo cantiere digitale.
-                  </p>
-                  <Button asChild>
-                    <Link href="/projects/new">
-                      <Plus className="mr-2 h-4 w-4" /> Crea Progetto
-                    </Link>
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {projects && projects.length > 0 ? (
+              projects.map((project) => (
+                <ProjectCard key={project.id} project={project} />
+              ))
+            ) : (
+              <div className="md:col-span-2 lg:col-span-3 text-center py-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center">
+                <h3 className="text-xl font-medium font-headline">Nessun progetto trovato</h3>
+                <p className="text-muted-foreground mt-2 mb-4 max-w-sm">
+                  Inizia creando un nuovo progetto per gestire il tuo cantiere digitale.
+                </p>
+                <Button asChild>
+                  <Link href="/projects/new">
+                    <Plus className="mr-2 h-4 w-4" /> Crea Progetto
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </div>

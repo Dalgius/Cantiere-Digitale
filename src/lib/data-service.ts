@@ -51,6 +51,25 @@ export async function getProject(id: string): Promise<Project | null> {
 }
 
 
+export async function getProjectsByOwner(ownerId: string): Promise<Project[]> {
+    try {
+        const projectsCol = collection(db, 'projects');
+        const q = query(projectsCol, where("ownerId", "==", ownerId));
+        const projectSnapshot = await getDocs(q);
+
+        if (projectSnapshot.empty) {
+            return [];
+        }
+        
+        const projectList = projectSnapshot.docs.map(snapshotToProject);
+        return projectList;
+    } catch (error) {
+        console.error(`Error fetching projects for owner ${ownerId}:`, error);
+        return [];
+    }
+}
+
+
 export async function getDailyLogsForProject(projectId: string): Promise<DailyLog[]> {
     try {
         const logsCol = collection(db, `projects/${projectId}/dailyLogs`);
