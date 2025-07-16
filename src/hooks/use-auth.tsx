@@ -17,11 +17,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const publicRoutes = ['/login', '/signup'];
 
 function AuthLoader() {
-    return (
-        <div className="flex min-h-screen w-full items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-    );
+  return (
+    <div className="flex min-h-screen w-full items-center justify-center bg-background">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    </div>
+  );
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -31,12 +31,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // This effect handles the Firebase auth state listener
+    // If Firebase is not initialized, stop loading and let redirection logic handle it.
     if (!auth) {
-        console.warn("Firebase Auth is not initialized. Skipping auth state listener.");
+        console.warn("Firebase Auth is not initialized. User will be treated as logged out.");
         setLoading(false);
         return;
     }
+    // This effect handles the Firebase auth state listener
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // This effect handles the redirection logic
+    // This effect handles the redirection logic, it runs only after the initial loading is complete.
     if (loading) {
       return; // Don't do anything while loading
     }
@@ -53,10 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isPublic = publicRoutes.includes(pathname);
 
     if (!user && !isPublic) {
-      // If not logged in and not on a public route, redirect to login
+      // If not logged in and trying to access a protected route, redirect to login
       router.replace('/login');
     } else if (user && isPublic) {
-      // If logged in and on a public route, redirect to dashboard
+      // If logged in and on a public route (login/signup), redirect to dashboard
       router.replace('/');
     }
   }, [user, loading, pathname, router]);
@@ -65,14 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isPublic = publicRoutes.includes(pathname);
   const isRedirecting = (!user && !isPublic) || (user && isPublic);
 
+  // Show a loader during the initial auth check or if a redirect is imminent.
+  // This prevents rendering the page content momentarily before redirecting, which is the source of the loop.
   if (loading || isRedirecting) {
     return <AuthLoader />;
   }
 
-  const value = { user, loading };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading: false }}>
       {children}
     </AuthContext.Provider>
   );
