@@ -84,7 +84,7 @@ export default function SignUpPage() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="mario.rossi@email.com" {...field} />
+                        <Input placeholder="mario.rossi@email.com" {...field} autoComplete="email" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -97,7 +97,7 @@ export default function SignUpPage() {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input type="password" {...field} autoComplete="new-password" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -110,7 +110,7 @@ export default function SignUpPage() {
                     <FormItem>
                       <FormLabel>Conferma Password</FormLabel>
                       <FormControl>
-                        <Input type="password" {...field} />
+                        <Input type="password" {...field} autoComplete="new-password" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
