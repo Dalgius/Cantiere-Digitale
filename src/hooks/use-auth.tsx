@@ -31,49 +31,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    // If Firebase is not initialized, stop loading and let redirection logic handle it.
+    console.log('[AuthProvider] Mounting and setting up auth state listener.');
     if (!auth) {
-        console.warn("Firebase Auth is not initialized. User will be treated as logged out.");
+        console.error("[AuthProvider] Firebase Auth is not initialized. Cannot set up listener.");
         setLoading(false);
         return;
     }
-    // This effect handles the Firebase auth state listener
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('[onAuthStateChanged] Auth state changed. User:', user ? user.email : null);
       setUser(user);
       setLoading(false);
     });
-    return () => unsubscribe();
+    return () => {
+      console.log('[AuthProvider] Unmounting and cleaning up auth listener.');
+      unsubscribe();
+    }
   }, []);
 
   useEffect(() => {
-    // This effect handles the redirection logic, it runs only after the initial loading is complete.
     if (loading) {
-      return; // Don't do anything while loading
+      console.log('[RedirectEffect] Skipping redirect check: loading is true.');
+      return; 
     }
 
     const isPublic = publicRoutes.includes(pathname);
+    console.log(`[RedirectEffect] Checking redirect logic. Path: ${pathname}, IsPublic: ${isPublic}, User: ${!!user}`);
 
     if (!user && !isPublic) {
-      // If not logged in and trying to access a protected route, redirect to login
+      console.log(`[RedirectEffect] User not logged in, on protected route. Redirecting to /login.`);
       router.replace('/login');
     } else if (user && isPublic) {
-      // If logged in and on a public route (login/signup), redirect to dashboard
+      console.log(`[RedirectEffect] User logged in, on public route. Redirecting to /.`);
       router.replace('/');
+    } else {
+       console.log(`[RedirectEffect] No redirect needed.`);
     }
   }, [user, loading, pathname, router]);
 
-  // Determine if we should show the children or a loader
-  const isPublic = publicRoutes.includes(pathname);
-  const isRedirecting = (!user && !isPublic) || (user && isPublic);
 
-  // Show a loader during the initial auth check or if a redirect is imminent.
-  // This prevents rendering the page content momentarily before redirecting, which is the source of the loop.
-  if (loading || isRedirecting) {
+  const isPublic = publicRoutes.includes(pathname);
+  const shouldRedirect = !loading && ((!user && !isPublic) || (user && isPublic));
+
+  if (loading || shouldRedirect) {
+    console.log(`[Render] Showing loader. Loading: ${loading}, ShouldRedirect: ${shouldRedirect}`);
     return <AuthLoader />;
   }
-
+  
+  console.log(`[Render] Rendering children. Path: ${pathname}`);
   return (
-    <AuthContext.Provider value={{ user, loading: false }}>
+    <AuthContext.Provider value={{ user, loading }}>
       {children}
     </AuthContext.Provider>
   );
