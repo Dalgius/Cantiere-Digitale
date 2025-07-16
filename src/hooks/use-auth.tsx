@@ -31,55 +31,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    console.log('[AuthProvider] Mounting and setting up auth state listener.');
-    if (!auth) {
-        console.error("[AuthProvider] Firebase Auth is not initialized. Cannot set up listener.");
-        setLoading(false);
-        return;
-    }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log('[onAuthStateChanged] Auth state changed. User:', user ? user.email : null);
       setUser(user);
       setLoading(false);
     });
-    return () => {
-      console.log('[AuthProvider] Unmounting and cleaning up auth listener.');
-      unsubscribe();
-    }
+    return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (loading) {
-      console.log('[RedirectEffect] Skipping redirect check: loading is true.');
-      return; 
-    }
-
-    const isPublic = publicRoutes.includes(pathname);
-    console.log(`[RedirectEffect] Checking redirect logic. Path: ${pathname}, IsPublic: ${isPublic}, User: ${!!user}`);
-
-    if (!user && !isPublic) {
-      console.log(`[RedirectEffect] User not logged in, on protected route. Redirecting to /login.`);
-      router.replace('/login');
-    } else if (user && isPublic) {
-      console.log(`[RedirectEffect] User logged in, on public route. Redirecting to /.`);
-      router.replace('/');
-    } else {
-       console.log(`[RedirectEffect] No redirect needed.`);
-    }
-  }, [user, loading, pathname, router]);
-
+  if (loading) {
+    return <AuthLoader />;
+  }
 
   const isPublic = publicRoutes.includes(pathname);
-  const shouldRedirect = !loading && ((!user && !isPublic) || (user && isPublic));
 
-  if (loading || shouldRedirect) {
-    console.log(`[Render] Showing loader. Loading: ${loading}, ShouldRedirect: ${shouldRedirect}`);
+  if (!user && !isPublic) {
+    router.replace('/login');
+    return <AuthLoader />;
+  }
+
+  if (user && isPublic) {
+    router.replace('/');
     return <AuthLoader />;
   }
   
-  console.log(`[Render] Rendering children. Path: ${pathname}`);
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, loading: false }}>
       {children}
     </AuthContext.Provider>
   );
