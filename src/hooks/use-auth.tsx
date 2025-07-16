@@ -50,9 +50,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return; // Non fare nulla finché lo stato di autenticazione non è definito
     }
 
-    const isNavigating = (!user && !isPublicRoute) || (user && isPublicRoute);
+    const needsRedirect = (!user && !isPublicRoute) || (user && isPublicRoute);
 
-    if (isNavigating) {
+    if (needsRedirect) {
       if (!user && !isPublicRoute) {
         router.replace('/login');
       } else if (user && isPublicRoute) {
