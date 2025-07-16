@@ -30,8 +30,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const isPublicRoute = publicRoutes.includes(pathname);
-
   useEffect(() => {
     if (!auth) {
         console.warn("Firebase Auth is not initialized. Skipping auth state listener.");
@@ -47,9 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (loading) {
-      return; // Non fare nulla finché lo stato di autenticazione non è definito
+      return;
     }
 
+    const isPublicRoute = publicRoutes.includes(pathname);
     const needsRedirect = (!user && !isPublicRoute) || (user && isPublicRoute);
 
     if (needsRedirect) {
@@ -59,11 +58,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.replace('/');
       }
     }
-  }, [user, loading, isPublicRoute, pathname, router]);
+  }, [user, loading, pathname, router]);
 
 
   // Mostra il loader se stiamo ancora caricando o se stiamo per reindirizzare
-  if (loading || (!user && !isPublicRoute) || (user && isPublicRoute)) {
+  if (loading || (!user && !publicRoutes.includes(pathname)) || (user && publicRoutes.includes(pathname))) {
     return <AuthLoader />;
   }
 
