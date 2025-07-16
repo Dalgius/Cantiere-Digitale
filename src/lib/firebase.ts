@@ -5,7 +5,7 @@ import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getFirestore, Timestamp, type Firestore } from "firebase/firestore";
 import { getAuth, type Auth } from "firebase/auth";
 
-// These are the required variables from your .env file
+// These are the required variables from your .env.local file
 const requiredEnvVars = [
   'NEXT_PUBLIC_FIREBASE_API_KEY',
   'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
@@ -20,7 +20,7 @@ let db: Firestore;
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
 if (missingVars.length > 0) {
-  console.warn(`Firebase initialization skipped. Missing environment variables: ${missingVars.join(', ')}. Please check your .env file.`);
+  console.warn(`Firebase initialization skipped. Missing environment variables: ${missingVars.join(', ')}. Please check your .env.local file.`);
   // In a non-functional state, but objects are defined to prevent crashes.
   // @ts-ignore
   app = null;
