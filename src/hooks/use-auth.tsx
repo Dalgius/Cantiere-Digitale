@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    // This effect handles the Firebase auth state listener
     if (!auth) {
         console.warn("Firebase Auth is not initialized. Skipping auth state listener.");
         setLoading(false);
@@ -44,25 +45,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // This effect handles the redirection logic
     if (loading) {
-      return;
+      return; // Don't do anything while loading
     }
 
-    const isPublicRoute = publicRoutes.includes(pathname);
-    const needsRedirect = (!user && !isPublicRoute) || (user && isPublicRoute);
+    const isPublic = publicRoutes.includes(pathname);
 
-    if (needsRedirect) {
-      if (!user && !isPublicRoute) {
-        router.replace('/login');
-      } else if (user && isPublicRoute) {
-        router.replace('/');
-      }
+    if (!user && !isPublic) {
+      // If not logged in and not on a public route, redirect to login
+      router.replace('/login');
+    } else if (user && isPublic) {
+      // If logged in and on a public route, redirect to dashboard
+      router.replace('/');
     }
   }, [user, loading, pathname, router]);
 
+  // Determine if we should show the children or a loader
+  const isPublic = publicRoutes.includes(pathname);
+  const isRedirecting = (!user && !isPublic) || (user && isPublic);
 
-  // Mostra il loader se stiamo ancora caricando o se stiamo per reindirizzare
-  if (loading || (!user && !publicRoutes.includes(pathname)) || (user && publicRoutes.includes(pathname))) {
+  if (loading || isRedirecting) {
     return <AuthLoader />;
   }
 
