@@ -1,9 +1,9 @@
 // src/lib/firebase.ts
 
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, Timestamp } from "firebase/firestore";
-import { getAuth, connectAuthEmulator } from "firebase/auth";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getFirestore, Timestamp, type Firestore } from "firebase/firestore";
+import { getAuth, type Auth } from "firebase/auth";
 
 // These are the required variables from your .env file
 const requiredEnvVars = [
@@ -13,32 +13,36 @@ const requiredEnvVars = [
   'NEXT_PUBLIC_FIREBASE_APP_ID'
 ];
 
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+
 const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
 
-let app;
-
-// Initialize Firebase only if all env vars are present
-if (missingVars.length === 0) {
-    const firebaseConfig = {
-        apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-        authDomain: `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseapp.com`,
-        projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-        storageBucket: `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.appspot.com`,
-        messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-        appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
-    };
-
-    // This robust initialization prevents re-initialization on hot reloads
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+if (missingVars.length > 0) {
+  console.warn(`Firebase initialization skipped. Missing environment variables: ${missingVars.join(', ')}. Please check your .env file.`);
+  // In a non-functional state, but objects are defined to prevent crashes.
+  // @ts-ignore
+  app = null;
+  // @ts-ignore
+  auth = null;
+  // @ts-ignore
+  db = null;
 } else {
-    console.warn(`Firebase initialization skipped. Missing environment variables: ${missingVars.join(', ')}. Please check your .env file.`);
-    app = null; // Explicitly set to null if initialization is skipped
+  const firebaseConfig = {
+      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseapp.com`,
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.appspot.com`,
+      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
+  };
+
+  // This robust initialization prevents re-initialization on hot reloads
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+  auth = getAuth(app);
+  db = getFirestore(app);
 }
-
-
-// Initialize services, they will be null if app initialization failed.
-const db = app ? getFirestore(app) : null;
-const auth = app ? getAuth(app) : null;
 
 
 export { app, db, auth, Timestamp };
