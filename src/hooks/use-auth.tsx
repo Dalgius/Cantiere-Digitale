@@ -21,12 +21,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Auth state listener (runs once on mount)
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
+    // Only subscribe if auth is initialized
+    if (auth) {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        setUser(user);
+        setLoading(false);
+      });
+      // Cleanup subscription on unmount
+      return () => unsubscribe();
+    } else {
+      // If auth is not available, stop loading and treat as logged out
       setLoading(false);
-    });
-    // Cleanup subscription on unmount
-    return () => unsubscribe();
+      setUser(null);
+    }
   }, []);
 
   // Route protection (separate effect)
