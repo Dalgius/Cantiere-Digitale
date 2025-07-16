@@ -1,4 +1,4 @@
-// src/hooks/use-auth.tsx
+
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -13,7 +13,6 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
 const publicRoutes = ['/login', '/signup'];
 
 function AuthLoader() {
@@ -27,9 +26,12 @@ function AuthLoader() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
 
+  // In ascolto dei cambiamenti dello stato utente
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
@@ -38,25 +40,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
+  // Gestione redirect
   useEffect(() => {
-    if (loading) return; // Aspetta che l'autenticazione sia verificata
+    if (loading) return;
 
     const isPublic = publicRoutes.includes(pathname);
 
     if (!user && !isPublic) {
+      setIsRedirecting(true);
       router.replace('/login');
     } else if (user && isPublic) {
+      setIsRedirecting(true);
       router.replace('/');
+    } else {
+      setIsRedirecting(false); // Non serve redirect
     }
   }, [user, loading, pathname, router]);
 
-  // Mentre carica o se sta per reindirizzare, mostra il loader.
-  const isPublic = publicRoutes.includes(pathname);
-  const isRedirecting = (!user && !isPublic) || (user && isPublic);
+  // Mostra loader se:
   if (loading || isRedirecting) {
     return <AuthLoader />;
   }
-  
+
   return (
     <AuthContext.Provider value={{ user, loading: false }}>
       {children}
@@ -66,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
