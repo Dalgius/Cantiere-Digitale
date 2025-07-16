@@ -33,13 +33,13 @@ export default function SignUpPage() {
 
   async function onSubmit(values: TSignUpSchema) {
     setIsSubmitting(true);
-    const { error } = await handleSignUp(values);
+    const result = await handleSignUp(values);
 
-    if (error) {
+    if (!result.success) {
        toast({
         variant: 'destructive',
         title: 'Registrazione Fallita',
-        description: error.code === 'auth/email-already-in-use' 
+        description: result.error?.code === 'auth/email-already-in-use' 
             ? 'Questa email è già stata registrata.'
             : 'Si è verificato un errore. Riprova.',
       });

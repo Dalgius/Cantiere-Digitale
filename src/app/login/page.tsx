@@ -32,9 +32,9 @@ export default function LoginPage() {
 
   async function onSubmit(values: TLoginSchema) {
     setIsSubmitting(true);
-    const { error } = await handleSignIn(values);
+    const result = await handleSignIn(values);
 
-    if (error) {
+    if (!result.success) {
       toast({
         variant: 'destructive',
         title: 'Accesso Fallito',
