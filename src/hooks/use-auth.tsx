@@ -3,8 +3,9 @@
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase'; // Use the initialized auth instance
+import { auth } from '@/lib/firebase';
 import { usePathname, useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 interface AuthContextType {
   user: User | null;
@@ -13,44 +14,55 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const publicRoutes = ['/login', '/signup'];
+
+function AuthLoader() {
+    return (
+        <div className="flex min-h-screen w-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    );
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
-  // Auth state listener (runs once on mount)
   useEffect(() => {
-    // Only subscribe if auth is initialized
-    if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setUser(user);
+    if (!auth) {
+        console.warn("Firebase Auth is not initialized. Skipping auth state listener.");
         setLoading(false);
-      });
-      // Cleanup subscription on unmount
-      return () => unsubscribe();
-    } else {
-      // If auth is not available, stop loading and treat as logged out
-      setLoading(false);
-      setUser(null);
+        return;
     }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      setLoading(false);
+    });
+    return () => unsubscribe();
   }, []);
 
-  // Route protection (separate effect)
-  useEffect(() => {
-    if (loading) return;
+  const isPublicRoute = publicRoutes.includes(pathname);
+  
+  // While loading auth state, show a global loader
+  if (loading) {
+    return <AuthLoader />;
+  }
 
-    const publicRoutes = ['/login', '/signup'];
-    const isPublicRoute = publicRoutes.includes(pathname);
+  // If user is not logged in and trying to access a protected route, redirect to login
+  if (!user && !isPublicRoute) {
+    router.replace('/login');
+    return <AuthLoader />; // Show loader while redirecting
+  }
 
-    if (user && isPublicRoute) {
-      router.replace('/'); // Use replace to prevent history buildup
-    } else if (!user && !isPublicRoute) {
-      router.replace('/login');
-    }
-  }, [loading, pathname, router, user?.uid]); // Use user.uid for stability
+  // If user is logged in and trying to access a public route, redirect to dashboard
+  if (user && isPublicRoute) {
+    router.replace('/');
+    return <AuthLoader />; // Show loader while redirecting
+  }
 
-  const value = React.useMemo(() => ({ user, loading }), [user?.uid, loading]);
+  const value = { user, loading };
 
   return (
     <AuthContext.Provider value={value}>
