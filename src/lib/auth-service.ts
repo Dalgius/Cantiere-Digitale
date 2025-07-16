@@ -5,11 +5,13 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, Us
 import { auth } from './firebase'; // Import the initialized auth instance
 import type { TLoginSchema, TSignUpSchema } from './auth-schemas';
 
+// This function now correctly returns a structured error object
 export async function handleSignUp(values: TSignUpSchema): Promise<{ user?: UserCredential; error?: AuthError }> {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
     return { user: userCredential };
   } catch (error) {
+    // Ensure the caught error is always returned in the expected structure
     return { error: error as AuthError };
   }
 }
