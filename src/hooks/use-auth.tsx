@@ -38,19 +38,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  if (loading) {
-    return <AuthLoader />;
-  }
+  useEffect(() => {
+    if (loading) return; // Aspetta che l'autenticazione sia verificata
 
+    const isPublic = publicRoutes.includes(pathname);
+
+    if (!user && !isPublic) {
+      router.replace('/login');
+    } else if (user && isPublic) {
+      router.replace('/');
+    }
+  }, [user, loading, pathname, router]);
+
+  // Mentre carica o se sta per reindirizzare, mostra il loader.
   const isPublic = publicRoutes.includes(pathname);
-
-  if (!user && !isPublic) {
-    router.replace('/login');
-    return <AuthLoader />;
-  }
-
-  if (user && isPublic) {
-    router.replace('/');
+  const isRedirecting = (!user && !isPublic) || (user && isPublic);
+  if (loading || isRedirecting) {
     return <AuthLoader />;
   }
   
