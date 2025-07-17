@@ -16,7 +16,10 @@ import { useToast } from '@/hooks/use-toast';
 import { handleSignIn } from '@/lib/auth-service';
 import { LoginSchema, type TLoginSchema } from '@/lib/auth-schemas';
 
+console.log('[LoginPage] file loaded');
+
 export default function LoginPage() {
+  console.log('[LoginPage] rendering...');
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -29,6 +32,7 @@ export default function LoginPage() {
   });
 
   async function onSubmit(values: TLoginSchema) {
+    console.log('[LoginPage] onSubmit called with:', values);
     setIsSubmitting(true);
     const result = await handleSignIn(values);
 
