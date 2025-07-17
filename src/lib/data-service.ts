@@ -1,9 +1,10 @@
 // src/lib/data-service.ts
 'use server';
 
-import { db, Timestamp } from '@/lib/firebase';
+import { db, Timestamp, auth } from '@/lib/firebase';
 import type { DailyLog, Project } from '@/lib/types';
 import { collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { updateProfile } from 'firebase/auth';
 import { stakeholders } from './data';
 
 // Helper function to convert Firestore snapshots to Project objects
@@ -166,4 +167,21 @@ export async function deleteProject(projectId: string): Promise<void> {
     const projectRef = doc(db, 'projects', projectId);
     // Note: This doesn't delete subcollections. A Cloud Function would be needed for that in production.
     await deleteDoc(projectRef);
+}
+
+export async function updateUserProfile(data: { displayName?: string, photoURL?: string }): Promise<void> {
+  const user = auth.currentUser;
+  // This check is now correctly performed on the client before calling the action.
+  // The server action relies on the client to be authenticated.
+  if (!user) {
+    throw new Error("Nessun utente autenticato trovato. L'aggiornamento deve essere richiesto da un client autenticato.");
+  }
+  try {
+    await updateProfile(user, data);
+    // Note: This update won't be reflected in other open tabs until they are refreshed
+    // or onAuthStateChanged is triggered again. This is expected Firebase behavior.
+  } catch (error) {
+    console.error("Error updating user profile on server:", error);
+    throw new Error('Aggiornamento del profilo fallito.');
+  }
 }

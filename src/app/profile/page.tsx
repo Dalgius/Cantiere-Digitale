@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { updateUserProfile } from '@/lib/auth-service';
+import { updateUserProfile } from '@/lib/data-service';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const profileSchema = z.object({
@@ -43,7 +43,14 @@ export default function ProfilePage() {
   }, [user, reset]);
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
-    if (!user) return;
+    if (!user) {
+       toast({
+        variant: 'destructive',
+        title: 'Errore',
+        description: 'Devi essere autenticato per aggiornare il profilo.',
+      });
+      return;
+    }
     setIsSubmitting(true);
     try {
       await updateUserProfile({ displayName: data.displayName });
