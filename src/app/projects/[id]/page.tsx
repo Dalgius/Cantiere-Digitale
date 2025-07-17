@@ -1,18 +1,16 @@
-
 // src/app/projects/[id]/page.tsx
 import { getDailyLogsForProject } from "@/lib/data-service";
 import { redirect } from "next/navigation";
 
 // This is a Server Component. It must be async to handle params correctly.
-export default async function ProjectPageRedirect({ params }: { params: { id: string } }) {
-  
-  const projectId = params.id;
-
-  if (!projectId) {
-    // Should not happen in normal flow, but good practice to handle.
+export default async function ProjectPageRedirect({ params }: { params: { id?: string } }) {
+  // Add a type check for params.id and handle undefined case
+  if (!params.id) {
     redirect('/');
     return null;
   }
+
+  const projectId = params.id;
 
   const projectLogs = await getDailyLogsForProject(projectId);
 
