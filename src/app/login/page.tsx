@@ -35,6 +35,7 @@ export default function LoginPage() {
     console.log('[LoginPage] onSubmit called with:', values);
     setIsSubmitting(true);
     const result = await handleSignIn(values);
+    console.log('[LoginPage] SignIn result:', result);
 
     if (!result.success) {
       toast({
