@@ -10,7 +10,7 @@ export default async function ProjectPageRedirect({ params }: { params: { id: st
   if (!projectId) {
     // Should not happen in normal flow, but good practice to handle.
     redirect('/');
-    return; // Add a return to stop execution
+    return null;
   }
 
   const projectLogs = await getDailyLogsForProject(projectId);
@@ -19,7 +19,7 @@ export default async function ProjectPageRedirect({ params }: { params: { id: st
   if (!projectLogs || projectLogs.length === 0) {
     const today = new Date().toISOString().split('T')[0];
     redirect(`/projects/${projectId}/${today}`);
-    return; // Add a return to stop execution
+    return null;
   }
 
   // Otherwise, sort the logs by date to find the most recent one and redirect.
@@ -28,5 +28,5 @@ export default async function ProjectPageRedirect({ params }: { params: { id: st
   
   const latestDate = new Date(latestLog.date).toISOString().split('T')[0];
   redirect(`/projects/${projectId}/${latestDate}`);
-  // The function will stop here due to the redirect.
+  return null;
 }
