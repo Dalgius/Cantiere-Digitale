@@ -29,35 +29,60 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    console.log('[AuthProvider] onAuthStateChanged handler attached');
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('[AuthProvider] Auth state changed:', user ? user.uid : null);
       setUser(user);
       setLoading(false);
     });
-    return () => unsubscribe();
+    return () => {
+      console.log('[AuthProvider] onAuthStateChanged handler detached');
+      unsubscribe();
+    }
   }, []);
 
   useEffect(() => {
+    console.log('[AuthProvider] [RedirectEffect] Running. loading:', loading, 'user:', !!user, 'pathname:', pathname);
     if (loading) return;
+    
     const isPublic = publicRoutes.includes(pathname);
 
-    // Redirect to login if user is not authenticated and is on a protected route
     if (!user && !isPublic) {
-      router.replace('/login');
-    }
-    // Redirect to home if user is authenticated and is on a public route
-    else if (user && isPublic) {
-      router.replace('/');
+      if (pathname !== '/login') {
+        console.log(`[AuthProvider] Redirecting to /login from ${pathname}`);
+        router.replace('/login');
+      } else {
+        console.log('[AuthProvider] No redirect needed, already on /login');
+      }
+    } else if (user && isPublic) {
+        if (pathname !== '/') {
+            console.log(`[AuthProvider] Redirecting to / from ${pathname}`);
+            router.replace('/');
+        } else {
+            console.log('[AuthProvider] No redirect needed, already on /');
+        }
+    } else {
+      console.log('[AuthProvider] No redirect needed');
     }
   }, [user, loading, pathname, router]);
   
-  // Show loader while waiting for auth state to be determined
-  // During redirects, Next.js will handle the rendering, and since `loading` will be false,
-  // we avoid showing the loader indefinitely.
-  const isPublic = publicRoutes.includes(pathname);
-  if (loading || (!user && !isPublic) || (user && isPublic)) {
-     return <AuthLoader />;
+  if (loading) {
+    console.log("[AuthProvider] Rendering loader because loading is true.");
+    return <AuthLoader />;
   }
 
+  // This logic helps prevent rendering children on the wrong route while redirecting
+  const isPublic = publicRoutes.includes(pathname);
+  if (!user && !isPublic) {
+    console.log("[AuthProvider] Rendering loader because user is not authenticated on a protected route.");
+    return <AuthLoader />;
+  }
+  if (user && isPublic) {
+    console.log("[AuthProvider] Rendering loader because user is authenticated on a public route.");
+    return <AuthLoader />;
+  }
+  
+  console.log("[AuthProvider] Rendering children.");
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}
