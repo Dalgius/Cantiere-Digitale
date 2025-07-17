@@ -171,15 +171,11 @@ export async function deleteProject(projectId: string): Promise<void> {
 
 export async function updateUserProfile(data: { displayName?: string, photoURL?: string }): Promise<void> {
   const user = auth.currentUser;
-  // This check is now correctly performed on the client before calling the action.
-  // The server action relies on the client to be authenticated.
   if (!user) {
     throw new Error("Nessun utente autenticato trovato. L'aggiornamento deve essere richiesto da un client autenticato.");
   }
   try {
     await updateProfile(user, data);
-    // Note: This update won't be reflected in other open tabs until they are refreshed
-    // or onAuthStateChanged is triggered again. This is expected Firebase behavior.
   } catch (error) {
     console.error("Error updating user profile on server:", error);
     throw new Error('Aggiornamento del profilo fallito.');

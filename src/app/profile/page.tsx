@@ -14,8 +14,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { updateUserProfile } from '@/lib/data-service';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { updateUserProfile } from '@/lib/data-service';
 
 const profileSchema = z.object({
   displayName: z.string().min(1, 'Il nome è obbligatorio'),
@@ -29,8 +29,12 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProfileFormValues>({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
+    defaultValues: {
+      displayName: '',
+      email: '',
+    }
   });
 
   useEffect(() => {
@@ -58,6 +62,10 @@ export default function ProfilePage() {
         title: 'Profilo Aggiornato',
         description: 'Le tue informazioni sono state salvate con successo.',
       });
+      // Aggiorna il nome visualizzato nell'interfaccia utente dopo il successo
+      if (auth.currentUser) {
+        setValue('displayName', auth.currentUser.displayName || '');
+      }
     } catch (error) {
       console.error('Failed to update profile:', error);
       toast({
