@@ -1,7 +1,9 @@
+
 // src/app/layout.tsx
 import type { Metadata } from "next";
 import "./globals.css";
-import { ClientProviders } from "./client-providers";
+import { AuthProvider } from "@/hooks/use-auth";
+import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: "Cantiere Digitale",
@@ -28,9 +30,10 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased">
-        <ClientProviders>
+        <AuthProvider>
           {children}
-        </ClientProviders>
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

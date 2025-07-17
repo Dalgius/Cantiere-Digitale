@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('[AuthProvider] onAuthStateChanged:', user);
       setUser(user);
       setLoading(false);
     });
@@ -39,25 +40,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (loading) return;
-    
     const isPublic = publicRoutes.includes(pathname);
 
-    if (!user && !isPublic) {
-      // Se l'utente non è loggato e la rotta non è pubblica, reindirizza a login
+    // IMPORTANTE: Evita redirect loop se sei già sulla pagina giusta
+    if (!user && !isPublic && pathname !== '/login') {
       router.replace('/login');
-    } else if (user && isPublic) {
-      // Se l'utente è loggato e si trova su una rotta pubblica, reindirizza alla dashboard
+    }
+    if (user && isPublic && pathname !== '/') {
       router.replace('/');
     }
   }, [user, loading, pathname, router]);
-  
-  // Mostra il loader se l'autenticazione è in corso
-  // o se stiamo per essere reindirizzati.
+
+  // Se l'autenticazione è in corso O se stiamo per essere reindirizzati, mostra il loader
   const isPublic = publicRoutes.includes(pathname);
   if (loading || (!user && !isPublic) || (user && isPublic)) {
     return <AuthLoader />;
   }
-  
+
   return (
     <AuthContext.Provider value={{ user, loading }}>
       {children}
