@@ -3,10 +3,11 @@ import { getDailyLogsForProject } from "@/lib/data-service";
 import { redirect } from "next/navigation";
 
 export default async function ProjectPageRedirect({ 
-  params 
+  params: paramsPromise 
 }: { 
-  params: { id: string } 
+  params: Promise<{ id: string }> 
 }) {
+  const params = await paramsPromise;  // Await qui per risolvere params
   const projectId = params.id;
 
   if (!projectId) {
