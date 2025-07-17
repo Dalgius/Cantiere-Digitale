@@ -1,3 +1,4 @@
+
 // src/app/projects/[id]/page.tsx
 import { getDailyLogsForProject } from "@/lib/data-service";
 import { redirect } from "next/navigation";
