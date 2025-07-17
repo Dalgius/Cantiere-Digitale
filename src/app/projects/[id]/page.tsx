@@ -2,30 +2,47 @@
 import { getDailyLogsForProject } from "@/lib/data-service";
 import { redirect } from "next/navigation";
 
-// This is a Server Component. It must be async to handle params correctly.
-export default async function ProjectPageRedirect({ params }: { params: { id?: string } }) {
-  // Add a type check for params.id and handle undefined case
-  if (!params.id) {
-    redirect('/');
-    return null;
-  }
-
+export default async function ProjectPageRedirect({ 
+  params 
+}: { 
+  params: { id: string } 
+}) {
   const projectId = params.id;
+
+  if (!projectId) {
+    redirect('/');
+  }
 
   const projectLogs = await getDailyLogsForProject(projectId);
 
-  // If there are no logs, redirect to a new log for today's date.
+  // Handle case with no logs
   if (!projectLogs || projectLogs.length === 0) {
-    const today = new Date().toISOString().split('T')[0];
-    redirect(`/projects/${projectId}/${today}`);
-    return null;
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    redirect(`/projects/${projectId}/${todayStr}`);
   }
 
-  // Otherwise, sort the logs by date to find the most recent one and redirect.
-  const sortedLogs = projectLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  const latestLog = sortedLogs[0];
+  // Find most recent valid date efficiently
+  let latestDate: Date | null = null;
   
-  const latestDate = new Date(latestLog.date).toISOString().split('T')[0];
-  redirect(`/projects/${projectId}/${latestDate}`);
-  return null;
+  for (const log of projectLogs) {
+    try {
+      const logDate = new Date(log.date);
+      // Ensure logDate is a valid date before comparison
+      if (!isNaN(logDate.getTime())) {
+        if (!latestDate || logDate > latestDate) {
+          latestDate = logDate;
+        }
+      }
+    } catch {
+      // Skip invalid dates
+      continue;
+    }
+  }
+
+  // Fallback to today if no valid dates found
+  const targetDate = latestDate || new Date();
+  const dateStr = targetDate.toISOString().split('T')[0];
+  
+  redirect(`/projects/${projectId}/${dateStr}`);
 }
