@@ -1,19 +1,20 @@
+
 // src/app/signup/page.tsx
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Building2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { createUserWithEmailAndPassword, type AuthError } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { handleSignUp } from '@/lib/auth-service';
 import { SignUpSchema, type TSignUpSchema } from '@/lib/auth-schemas';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -33,23 +34,24 @@ export default function SignUpPage() {
 
   async function onSubmit(values: TSignUpSchema) {
     setIsSubmitting(true);
-    const result = await handleSignUp(values);
-
-    if (!result.success) {
-       toast({
+    try {
+      await createUserWithEmailAndPassword(auth, values.email, values.password);
+      toast({
+        title: 'Registrazione completata!',
+        description: 'Verrai reindirizzato alla dashboard.',
+      });
+      // Success is handled by the AuthProvider, which will redirect.
+    } catch (e) {
+      const error = e as AuthError;
+      console.error('[SignUpPage] SignUp failed:', error);
+      toast({
         variant: 'destructive',
         title: 'Registrazione Fallita',
-        description: result.error?.code === 'auth/email-already-in-use' 
+        description: error.code === 'auth/email-already-in-use' 
             ? 'Questa email è già stata registrata.'
             : 'Si è verificato un errore. Riprova.',
       });
       setIsSubmitting(false);
-    } else {
-       toast({
-        title: 'Registrazione completata!',
-        description: 'Verrai reindirizzato alla dashboard.',
-      });
-       // The AuthProvider will handle the redirect.
     }
   }
 

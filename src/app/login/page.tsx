@@ -7,13 +7,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Building2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { signInWithEmailAndPassword, type AuthError } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { handleSignIn } from '@/lib/auth-service';
 import { LoginSchema, type TLoginSchema } from '@/lib/auth-schemas';
 
 export default function LoginPage() {
@@ -30,9 +31,12 @@ export default function LoginPage() {
 
   async function onSubmit(values: TLoginSchema) {
     setIsSubmitting(true);
-    const result = await handleSignIn(values);
-
-    if (!result.success) {
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      // Success is handled by the AuthProvider, which will redirect.
+    } catch (e) {
+      const error = e as AuthError;
+      console.error('[LoginPage] SignIn failed:', error);
       toast({
         variant: 'destructive',
         title: 'Accesso Fallito',
@@ -40,9 +44,7 @@ export default function LoginPage() {
       });
       setIsSubmitting(false);
     }
-    // Non è più necessario gestire il caso di successo qui.
-    // L'AuthProvider rileverà il cambio di stato e gestirà il reindirizzamento.
-    // Non serve `setIsSubmitting(false)` nel caso di successo perché la pagina cambierà.
+    // No need to set isSubmitting to false on success because the page will redirect.
   }
 
   return (
