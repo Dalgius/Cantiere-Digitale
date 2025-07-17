@@ -1,8 +1,8 @@
+
 // src/app/login/page.tsx
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Building2, Loader2 } from 'lucide-react';
@@ -15,11 +15,9 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { handleSignIn } from '@/lib/auth-service';
 import { LoginSchema, type TLoginSchema } from '@/lib/auth-schemas';
-import { useAuth } from '@/hooks/use-auth';
 
 export default function LoginPage() {
   const { toast } = useToast();
-  const { user, loading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<TLoginSchema>({
@@ -41,22 +39,10 @@ export default function LoginPage() {
         description: 'Le credenziali inserite non sono corrette. Riprova.',
       });
       setIsSubmitting(false);
-    } else {
-      toast({
-        title: 'Accesso Effettuato',
-        description: 'Bentornato!',
-      });
-      // The AuthProvider will handle the redirect.
     }
-  }
-
-  // Show a loader while auth state is being checked or if the user is already logged in
-  if (loading || user) {
-     return (
-      <div className="flex min-h-screen w-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    // Non è più necessario gestire il caso di successo qui.
+    // L'AuthProvider rileverà il cambio di stato e gestirà il reindirizzamento.
+    // setIsSubmitting(false) non è necessario perché la pagina cambierà.
   }
 
   return (
