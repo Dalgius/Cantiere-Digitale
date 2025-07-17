@@ -51,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user, loading, pathname, router]);
 
-  // Se l'autenticazione è in corso O se stiamo per essere reindirizzati, mostra il loader
+  // Se l'autenticazione è in corso O se stiamo per essere reindirizzati, mostra il loader.
   const isPublic = publicRoutes.includes(pathname);
   if (loading || (!user && !isPublic) || (user && isPublic)) {
     return <AuthLoader />;
