@@ -16,31 +16,35 @@ import { getDailyLog, getProject, getDailyLogsForProject, saveDailyLog } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { DailyLogNav } from "@/components/log/daily-log-nav";
 import { stakeholders } from "@/lib/data";
+import { Header } from "@/components/layout/header";
 
 function PageLoader() {
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-8">
-        <aside className="lg:col-span-1 space-y-6">
-          <Card>
-            <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-           </Card>
-          <Card>
-            <CardContent className="p-0">
-              <Skeleton className="h-72 w-full" />
-            </CardContent>
-          </Card>
-        </aside>
-        <main className="lg:col-span-3 space-y-6 mt-8 lg:mt-0">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-48 w-full" />
-        </main>
+    <>
+      <Header />
+      <div className="container mx-auto p-4 md:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-8">
+          <aside className="lg:col-span-1 space-y-6">
+            <Card>
+              <CardHeader>
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+              </CardHeader>
+             </Card>
+            <Card>
+              <CardContent className="p-0">
+                <Skeleton className="h-72 w-full" />
+              </CardContent>
+            </Card>
+          </aside>
+          <main className="lg:col-span-3 space-y-6 mt-8 lg:mt-0">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -165,64 +169,67 @@ export default function ProjectLogPage() {
   }
   
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-8">
-        
-        <aside className="lg:col-span-1 space-y-6">
-           <Card>
-            <CardHeader>
-                <CardTitle className="font-headline text-lg text-primary">{project.name}</CardTitle>
-                <CardDescription>{project.client}</CardDescription>
-            </CardHeader>
-           </Card>
-          <DailyLogNav projectLogs={projectLogs} projectId={project.id} activeDate={dailyLog.date} />
-        </aside>
-
-        <main className="lg:col-span-3 space-y-6 mt-8 lg:mt-0">
-          <DailyLogHeader logDate={dailyLog.date} weather={dailyLog.weather} isDisabled={false} onWeatherChange={(newWeather) => setDailyLog(prev => prev ? {...prev, weather: newWeather} : null)} />
-
-          <div className="space-y-4">
-            <h2 className="font-headline text-2xl font-bold">Timeline del Giorno</h2>
-            {dailyLog.annotations.map(annotation => (
-              <AnnotationCard key={annotation.id} annotation={annotation} isLogValidated={dailyLog.isValidated}/>
-            ))}
-             {dailyLog.annotations.length === 0 && (
-                <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                    <p className="text-muted-foreground">Nessuna annotazione per oggi. Inizia ad aggiungerne una.</p>
-                </div>
-             )}
-          </div>
+    <div className="flex min-h-screen flex-col">
+      <Header />
+      <main className="container mx-auto p-4 md:p-8 flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-8">
           
-          <NewAnnotationForm 
-            onAddAnnotation={addAnnotation} 
-            isDisabled={false}
-            projectDescription={project.description}
-            />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
-              <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-lg">Azioni e Strumenti</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                    <Button onClick={handleSave} className="w-full">
-                      <Save className="mr-2 h-4 w-4" /> Salva Dati Giornata
-                    </Button>
-                    <Button className="w-full" variant="secondary">
-                        <FileText className="mr-2 h-4 w-4" /> Emetti SAL
-                    </Button>
-                </CardContent>
-                <CardFooter>
-                    <Button variant="outline" className="w-full">
-                        <Download className="mr-2 h-4 w-4" /> Esporta PDF
-                    </Button>
-                </CardFooter>
-              </Card>
-          </div>
-        </main>
+          <aside className="lg:col-span-1 space-y-6">
+             <Card>
+              <CardHeader>
+                  <CardTitle className="font-headline text-lg text-primary">{project.name}</CardTitle>
+                  <CardDescription>{project.client}</CardDescription>
+              </CardHeader>
+             </Card>
+            <DailyLogNav projectLogs={projectLogs} projectId={project.id} activeDate={dailyLog.date} />
+          </aside>
 
-      </div>
+          <div className="lg:col-span-3 space-y-6 mt-8 lg:mt-0">
+            <DailyLogHeader logDate={dailyLog.date} weather={dailyLog.weather} isDisabled={false} onWeatherChange={(newWeather) => setDailyLog(prev => prev ? {...prev, weather: newWeather} : null)} />
+
+            <div className="space-y-4">
+              <h2 className="font-headline text-2xl font-bold">Timeline del Giorno</h2>
+              {dailyLog.annotations.map(annotation => (
+                <AnnotationCard key={annotation.id} annotation={annotation} isLogValidated={dailyLog.isValidated}/>
+              ))}
+               {dailyLog.annotations.length === 0 && (
+                  <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                      <p className="text-muted-foreground">Nessuna annotazione per oggi. Inizia ad aggiungerne una.</p>
+                  </div>
+               )}
+            </div>
+            
+            <NewAnnotationForm 
+              onAddAnnotation={addAnnotation} 
+              isDisabled={false}
+              projectDescription={project.description}
+              />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
+                <Card>
+                  <CardHeader>
+                      <CardTitle className="font-headline text-lg">Azioni e Strumenti</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                      <Button onClick={handleSave} className="w-full">
+                        <Save className="mr-2 h-4 w-4" /> Salva Dati Giornata
+                      </Button>
+                      <Button className="w-full" variant="secondary">
+                          <FileText className="mr-2 h-4 w-4" /> Emetti SAL
+                      </Button>
+                  </CardContent>
+                  <CardFooter>
+                      <Button variant="outline" className="w-full">
+                          <Download className="mr-2 h-4 w-4" /> Esporta PDF
+                      </Button>
+                  </CardFooter>
+                </Card>
+            </div>
+          </div>
+
+        </div>
+      </main>
     </div>
   );
 }
