@@ -16,10 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { handleSignIn } from '@/lib/auth-service';
 import { LoginSchema, type TLoginSchema } from '@/lib/auth-schemas';
 
-console.log('[LoginPage] file loaded');
-
 export default function LoginPage() {
-  console.log('[LoginPage] rendering...');
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -32,10 +29,8 @@ export default function LoginPage() {
   });
 
   async function onSubmit(values: TLoginSchema) {
-    console.log('[LoginPage] onSubmit called with:', values);
     setIsSubmitting(true);
     const result = await handleSignIn(values);
-    console.log('[LoginPage] SignIn result:', result);
 
     if (!result.success) {
       toast({
@@ -47,7 +42,7 @@ export default function LoginPage() {
     }
     // Non è più necessario gestire il caso di successo qui.
     // L'AuthProvider rileverà il cambio di stato e gestirà il reindirizzamento.
-    // setIsSubmitting(false) non è necessario perché la pagina cambierà.
+    // Non serve `setIsSubmitting(false)` nel caso di successo perché la pagina cambierà.
   }
 
   return (

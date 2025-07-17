@@ -43,19 +43,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isPublic = publicRoutes.includes(pathname);
 
     if (!user && !isPublic) {
-      if (pathname !== '/login') {
-        router.replace('/login');
-      }
+      // Se l'utente non è loggato e la rotta non è pubblica, reindirizza a login
+      router.replace('/login');
     } else if (user && isPublic) {
-        if (pathname !== '/') {
-            router.replace('/');
-        }
+      // Se l'utente è loggato e si trova su una rotta pubblica, reindirizza alla dashboard
+      router.replace('/');
     }
   }, [user, loading, pathname, router]);
   
+  // Mostra il loader se l'autenticazione è in corso
+  // o se stiamo per essere reindirizzati.
   const isPublic = publicRoutes.includes(pathname);
-
-  // Mostra il loader se stiamo caricando o se stiamo per reindirizzare
   if (loading || (!user && !isPublic) || (user && isPublic)) {
     return <AuthLoader />;
   }
