@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
@@ -11,7 +10,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
 }
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const publicRoutes = ['/login', '/signup'];
 
@@ -26,12 +24,10 @@ function AuthLoader() {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
 
-  // In ascolto dei cambiamenti dello stato utente
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
@@ -40,30 +36,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  // Gestione redirect
   useEffect(() => {
     if (loading) return;
-
     const isPublic = publicRoutes.includes(pathname);
 
+    // Redirect to login if user is not authenticated and is on a protected route
     if (!user && !isPublic) {
-      setIsRedirecting(true);
       router.replace('/login');
-    } else if (user && isPublic) {
-      setIsRedirecting(true);
+    }
+    // Redirect to home if user is authenticated and is on a public route
+    else if (user && isPublic) {
       router.replace('/');
-    } else {
-      setIsRedirecting(false); // Non serve redirect
     }
   }, [user, loading, pathname, router]);
-
-  // Mostra loader se:
-  if (loading || isRedirecting) {
-    return <AuthLoader />;
+  
+  // Show loader while waiting for auth state to be determined
+  // During redirects, Next.js will handle the rendering, and since `loading` will be false,
+  // we avoid showing the loader indefinitely.
+  const isPublic = publicRoutes.includes(pathname);
+  if (loading || (!user && !isPublic) || (user && isPublic)) {
+     return <AuthLoader />;
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading: false }}>
+    <AuthContext.Provider value={{ user, loading }}>
       {children}
     </AuthContext.Provider>
   );
@@ -71,8 +67,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }
