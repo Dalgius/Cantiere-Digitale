@@ -80,137 +80,294 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
     <div 
       ref={ref} 
       style={{ 
-        width: '210mm', 
-        minHeight: '297mm',
-        padding: '40px',
+        width: '794px', // Larghezza in pixel per A4 a 96 DPI
+        minHeight: 'auto',
+        padding: '60px 40px',
         boxSizing: 'border-box',
         backgroundColor: '#ffffff',
         color: '#000000',
         fontFamily: 'Arial, sans-serif',
-        fontSize: '12px',
-        lineHeight: '1.4',
+        fontSize: '14px',
+        lineHeight: '1.6',
         margin: '0',
         position: 'relative',
-        display: 'block',
-        contain: 'layout style paint',
-        isolation: 'isolate'
+        display: 'block'
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #1f2937', paddingBottom: '16px' }}>
+      {/* Header con icona sostituita */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        borderBottom: '3px solid #1f2937', 
+        paddingBottom: '20px',
+        marginBottom: '30px'
+      }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 8px 0' }}>{project.name}</h1>
-          <p style={{ fontSize: '14px', margin: '0' }}>Cliente: {project.client}</p>
-          <p style={{ fontSize: '14px', margin: '0' }}>Impresa: {project.contractor}</p>
+          <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: '0 0 10px 0', color: '#1f2937' }}>
+            {project.name}
+          </h1>
+          <p style={{ fontSize: '16px', margin: '0', color: '#374151' }}>
+            Cliente: {project.client}
+          </p>
+          <p style={{ fontSize: '16px', margin: '0', color: '#374151' }}>
+            Impresa: {project.contractor}
+          </p>
         </div>
         <div style={{ textAlign: 'right' }}>
-           <Building2 style={{ width: '40px', height: '40px', margin: '0 auto 8px auto', color: '#374151' }} />
-          <h2 style={{ fontSize: '18px', fontWeight: '600', margin: '0' }}>Giornale dei Lavori</h2>
+          {/* Sostituisci l'icona SVG con un'emoji o testo */}
+          <div style={{ 
+            fontSize: '48px', 
+            margin: '0 auto 10px auto',
+            width: '60px',
+            height: '60px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#f3f4f6',
+            borderRadius: '8px'
+          }}>
+            🏗️
+          </div>
+          <h2 style={{ fontSize: '20px', fontWeight: '600', margin: '0', color: '#1f2937' }}>
+            Giornale dei Lavori
+          </h2>
         </div>
       </div>
 
-      <div style={{ margin: '24px 0' }}>
-        <div style={{ border: '1px solid #9ca3af', borderRadius: '8px', padding: '16px' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 16px 0' }}>
+      {/* Dati del Giorno */}
+      <div style={{ marginBottom: '30px' }}>
+        <div style={{ 
+          border: '2px solid #e5e7eb', 
+          borderRadius: '8px', 
+          padding: '20px',
+          backgroundColor: '#f9fafb'
+        }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 20px 0', color: '#1f2937' }}>
             Dati del Giorno - {format(log.date, "eeee d MMMM yyyy", { locale: it })}
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', fontSize: '14px' }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(3, 1fr)', 
+            gap: '20px',
+            fontSize: '16px'
+          }}>
             <div><strong>Stato:</strong> {log.weather.state}</div>
             <div><strong>Temperatura:</strong> {log.weather.temperature}°C</div>
-            <div style={{ gridColumn: 'span 2' }}><strong>Precipitazioni:</strong> {log.weather.precipitation}</div>
+            <div><strong>Precipitazioni:</strong> {log.weather.precipitation}</div>
           </div>
         </div>
       </div>
 
-      <div style={{ margin: '24px 0' }}>
-        <h3 style={{ fontSize: '20px', fontWeight: 'bold', borderBottom: '1px solid #9ca3af', paddingBottom: '8px', marginBottom: '16px' }}>
+      {/* Annotazioni */}
+      <div style={{ marginBottom: '30px' }}>
+        <h3 style={{ 
+          fontSize: '22px', 
+          fontWeight: 'bold', 
+          borderBottom: '2px solid #9ca3af', 
+          paddingBottom: '10px', 
+          marginBottom: '20px',
+          color: '#1f2937'
+        }}>
           Annotazioni della Giornata
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {log.annotations.map(annotation => (
-            <div key={annotation.id} style={{ 
-              padding: '12px', 
-              border: '1px solid #e5e7eb', 
-              borderRadius: '6px',
-              pageBreakInside: 'avoid'
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                <div>
-                  <p style={{ fontWeight: 'bold', margin: '0', fontSize: '14px' }}>
-                    {annotation.author.name} <span style={{ fontWeight: 'normal', color: '#6b7280' }}>({annotation.author.role})</span>
-                  </p>
-                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
-                    {format(annotation.timestamp, 'd MMMM yyyy, HH:mm', { locale: it })}
-                  </p>
-                </div>
-                <span style={{ 
-                  backgroundColor: '#f3f4f6', 
-                  color: '#1f2937', 
-                  padding: '4px 8px', 
-                  borderRadius: '12px', 
-                  fontSize: '12px',
-                  fontWeight: '500'
+        {log.annotations.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {log.annotations.map((annotation, index) => (
+              <div key={annotation.id} style={{ 
+                padding: '15px', 
+                border: '1px solid #d1d5db', 
+                borderRadius: '8px',
+                backgroundColor: '#ffffff',
+                pageBreakInside: 'avoid'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'flex-start', 
+                  marginBottom: '10px' 
                 }}>
-                  {annotation.type}
-                </span>
+                  <div>
+                    <p style={{ 
+                      fontWeight: 'bold', 
+                      margin: '0', 
+                      fontSize: '16px',
+                      color: '#1f2937'
+                    }}>
+                      {annotation.author.name}
+                    </p>
+                    <p style={{ 
+                      fontSize: '14px', 
+                      color: '#6b7280', 
+                      margin: '2px 0 0 0' 
+                    }}>
+                      {annotation.author.role} - {format(annotation.timestamp, 'd MMMM yyyy, HH:mm', { locale: it })}
+                    </p>
+                  </div>
+                  <span style={{ 
+                    backgroundColor: '#e5e7eb', 
+                    color: '#1f2937', 
+                    padding: '6px 12px', 
+                    borderRadius: '20px', 
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}>
+                    {annotation.type}
+                  </span>
+                </div>
+                <div style={{ 
+                  fontSize: '15px', 
+                  lineHeight: '1.6',
+                  color: '#374151',
+                  whiteSpace: 'pre-wrap'
+                }}>
+                  {annotation.content}
+                </div>
               </div>
-              <p style={{ whiteSpace: 'pre-wrap', margin: '0', fontSize: '14px', paddingTop: '8px' }}>{annotation.content}</p>
-            </div>
-          ))}
-          {log.annotations.length === 0 && (
-            <p style={{ color: '#6b7280', margin: '0', padding: '16px', textAlign: 'center' }}>Nessuna annotazione per questa giornata.</p>
-          )}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p style={{ 
+            color: '#6b7280', 
+            fontSize: '16px',
+            textAlign: 'center',
+            padding: '40px 0',
+            fontStyle: 'italic'
+          }}>
+            Nessuna annotazione registrata per questa giornata.
+          </p>
+        )}
       </div>
 
-      <div style={{ margin: '24px 0' }}>
-        <h3 style={{ fontSize: '20px', fontWeight: 'bold', borderBottom: '1px solid #9ca3af', paddingBottom: '8px', marginBottom: '16px' }}>
+      {/* Risorse */}
+      <div style={{ marginBottom: '30px' }}>
+        <h3 style={{ 
+          fontSize: '22px', 
+          fontWeight: 'bold', 
+          borderBottom: '2px solid #9ca3af', 
+          paddingBottom: '10px', 
+          marginBottom: '20px',
+          color: '#1f2937'
+        }}>
           Risorse Impiegate
         </h3>
-        <div style={{ pageBreakInside: 'avoid' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        {log.resources.length > 0 ? (
+          <table style={{ 
+            width: '100%', 
+            borderCollapse: 'collapse',
+            fontSize: '14px'
+          }}>
             <thead>
               <tr>
-                <th style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'left', backgroundColor: '#f9fafb' }}>Tipo</th>
-                <th style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'left', backgroundColor: '#f9fafb' }}>Descrizione</th>
-                <th style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right', backgroundColor: '#f9fafb' }}>Q.tà</th>
-                <th style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right', backgroundColor: '#f9fafb' }}>Ore</th>
+                <th style={{ 
+                  border: '2px solid #374151', 
+                  padding: '12px 8px', 
+                  textAlign: 'left', 
+                  backgroundColor: '#f3f4f6',
+                  fontWeight: 'bold'
+                }}>
+                  Tipo
+                </th>
+                <th style={{ 
+                  border: '2px solid #374151', 
+                  padding: '12px 8px', 
+                  textAlign: 'left', 
+                  backgroundColor: '#f3f4f6',
+                  fontWeight: 'bold'
+                }}>
+                  Descrizione
+                </th>
+                <th style={{ 
+                  border: '2px solid #374151', 
+                  padding: '12px 8px', 
+                  textAlign: 'center', 
+                  backgroundColor: '#f3f4f6',
+                  fontWeight: 'bold'
+                }}>
+                  Quantità
+                </th>
+                <th style={{ 
+                  border: '2px solid #374151', 
+                  padding: '12px 8px', 
+                  textAlign: 'center', 
+                  backgroundColor: '#f3f4f6',
+                  fontWeight: 'bold'
+                }}>
+                  Ore
+                </th>
               </tr>
             </thead>
             <tbody>
               {log.resources.map(resource => (
                 <tr key={resource.id}>
-                  <td style={{ border: '1px solid #e5e7eb', padding: '8px' }}>{resource.type}</td>
-                  <td style={{ border: '1px solid #e5e7eb', padding: '8px' }}>
-                    {resource.description}
-                    {resource.company && <div style={{ fontSize: '11px', color: '#6b7280' }}>{resource.company}</div>}
-                    {resource.notes && <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic' }}>{resource.notes}</div>}
+                  <td style={{ 
+                    border: '1px solid #d1d5db', 
+                    padding: '10px 8px',
+                    verticalAlign: 'top'
+                  }}>
+                    {resource.type}
                   </td>
-                  <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{resource.quantity}</td>
-                  <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{resource.hours || '-'}</td>
+                  <td style={{ 
+                    border: '1px solid #d1d5db', 
+                    padding: '10px 8px',
+                    verticalAlign: 'top'
+                  }}>
+                    <div>{resource.description}</div>
+                    {resource.company && (
+                      <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
+                        {resource.company}
+                      </div>
+                    )}
+                    {resource.notes && (
+                      <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginTop: '4px' }}>
+                        {resource.notes}
+                      </div>
+                    )}
+                  </td>
+                  <td style={{ 
+                    border: '1px solid #d1d5db', 
+                    padding: '10px 8px', 
+                    textAlign: 'center',
+                    verticalAlign: 'top'
+                  }}>
+                    {resource.quantity}
+                  </td>
+                  <td style={{ 
+                    border: '1px solid #d1d5db', 
+                    padding: '10px 8px', 
+                    textAlign: 'center',
+                    verticalAlign: 'top'
+                  }}>
+                    {resource.hours || '-'}
+                  </td>
                 </tr>
               ))}
-              {log.resources.length === 0 && (
-                 <tr>
-                   <td colSpan={4} style={{ border: '1px solid #e5e7eb', padding: '16px', textAlign: 'center', color: '#6b7280' }}>
-                      Nessuna risorsa registrata.
-                   </td>
-                 </tr>
-              )}
             </tbody>
           </table>
-        </div>
+        ) : (
+          <p style={{ 
+            color: '#6b7280', 
+            fontSize: '16px',
+            textAlign: 'center',
+            padding: '40px 0',
+            fontStyle: 'italic'
+          }}>
+            Nessuna risorsa registrata per questa giornata.
+          </p>
+        )}
       </div>
 
+      {/* Footer */}
       <div style={{ 
-        paddingTop: '40px', 
-        marginTop: '40px', 
-        borderTop: '1px solid #d1d5db', 
-        fontSize: '12px', 
+        paddingTop: '30px', 
+        marginTop: '30px', 
+        borderTop: '2px solid #e5e7eb', 
+        fontSize: '14px', 
         color: '#6b7280', 
         textAlign: 'center' 
       }}>
-        <p style={{ margin: '0' }}>
-          Cantiere Digitale - Pagina generata il {format(new Date(), "d MMMM yyyy", { locale: it })}
+        <p style={{ margin: '0', fontWeight: '500' }}>
+          Cantiere Digitale - Documento generato il {format(new Date(), "d MMMM yyyy 'alle' HH:mm", { locale: it })}
         </p>
       </div>
     </div>
@@ -337,7 +494,7 @@ const handleExportToPDF = async () => {
 
   try {
     // Attendi che il componente sia completamente renderizzato
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 800));
 
     const contentToPrint = printRef.current;
     if (!contentToPrint) {
@@ -350,18 +507,31 @@ const handleExportToPDF = async () => {
     contentToPrint.style.display = 'block';
 
     const canvas = await html2canvas(contentToPrint, {
-      scale: 2,
+      scale: 1.5, // Ridotto per evitare problemi di memoria
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-      width: contentToPrint.offsetWidth,
-      height: contentToPrint.offsetHeight,
+      width: contentToPrint.scrollWidth,
+      height: contentToPrint.scrollHeight,
+      windowWidth: 1200,
+      windowHeight: 1600,
+      x: 0,
+      y: 0,
       onclone: (clonedDoc) => {
-        // Assicurati che tutti gli stili siano applicati
-        const clonedElement = clonedDoc.querySelector('[data-html2canvas-ignore]');
-        if (clonedElement) {
-          clonedElement.style.display = 'block';
-        }
+        // Sostituisci tutte le icone SVG con testo
+        const svgElements = clonedDoc.querySelectorAll('svg');
+        svgElements.forEach(svg => {
+          const replacement = clonedDoc.createElement('div');
+          replacement.innerHTML = '🏗️';
+          replacement.style.fontSize = '24px';
+          replacement.style.textAlign = 'center';
+          replacement.style.width = '40px';
+          replacement.style.height = '40px';
+          replacement.style.display = 'flex';
+          replacement.style.alignItems = 'center';
+          replacement.style.justifyContent = 'center';
+          svg.parentNode?.replaceChild(replacement, svg);
+        });
       }
     });
 
@@ -370,7 +540,7 @@ const handleExportToPDF = async () => {
       throw new Error("Il contenuto catturato è vuoto");
     }
 
-    const imgData = canvas.toDataURL('image/png');
+    const imgData = canvas.toDataURL('image/png', 0.8);
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -379,26 +549,32 @@ const handleExportToPDF = async () => {
 
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
+    const margin = 10; // Margine di 10mm
+    const availableWidth = pdfWidth - (margin * 2);
+    const availableHeight = pdfHeight - (margin * 2);
     
-    // Calcola le dimensioni corrette
+    // Calcola le dimensioni corrette mantenendo le proporzioni
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
+    const aspectRatio = canvasWidth / canvasHeight;
     
-    // Gestione multipagina
-    const imgHeight = (canvasHeight * pdfWidth) / canvasWidth;
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-    heightLeft -= pdfHeight;
-
-    while (heightLeft > 0) {
-      position -= pdfHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pdfHeight;
+    let imgWidth = availableWidth;
+    let imgHeight = availableWidth / aspectRatio;
+    
+    // Se l'altezza supera la pagina, ridimensiona basandoti sull'altezza
+    if (imgHeight > availableHeight) {
+      imgHeight = availableHeight;
+      imgWidth = availableHeight * aspectRatio;
     }
 
+    // Centra l'immagine
+    const xOffset = (pdfWidth - imgWidth) / 2;
+    const yOffset = margin;
+
+    // Aggiungi l'immagine una sola volta, centrata
+    pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
+
+    // Salva il PDF
     pdf.save(`GiornaleLavori_${project.name}_${dateString}.pdf`);
 
   } catch (error) {
