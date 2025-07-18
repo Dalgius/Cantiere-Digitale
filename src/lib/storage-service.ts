@@ -1,7 +1,4 @@
-
 // src/lib/storage-service.ts
-'use server';
-
 import { storage } from '@/lib/firebase';
 import { ref, deleteObject } from 'firebase/storage';
 
