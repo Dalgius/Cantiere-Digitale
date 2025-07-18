@@ -77,7 +77,16 @@ function ActionsCard({ onSave, onExport, isSaving, isExporting }: { onSave: () =
 // Componente dedicato per il layout di stampa
 const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLog }>(({ project, log }, ref) => {
   return (
-    <div ref={ref} className="p-10 bg-white text-black font-sans" style={{ width: '210mm', minHeight: '297mm' }}>
+    <div 
+      ref={ref} 
+      className="p-10 bg-white text-black font-sans"
+      style={{ 
+        width: '210mm', 
+        minHeight: '297mm',
+        padding: '40px',
+        boxSizing: 'border-box'
+      }}
+    >
         <header className="flex justify-between items-center border-b-2 border-gray-800 pb-4">
             <div>
                 <h1 className="text-2xl font-bold">{project.name}</h1>
@@ -351,7 +360,7 @@ export default function ProjectLogPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       
-      {/* Contenitore invisibile per la stampa - Renderizzato solo durante l'esportazione */}
+      {/* Contenitore invisibile per la stampa */}
       {isExporting && (
         <div 
           className="fixed pointer-events-none"
