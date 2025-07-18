@@ -606,66 +606,58 @@ const handleExportToPDF = async () => {
       return;
     }
     
-    // UI update is now optimistic but happens inside a new function
-    // to handle the async nature of file uploads gracefully.
-    const processAndAddAnnotation = async () => {
-      let newAttachments: Attachment[] = [];
+    let newAttachments: Attachment[] = [];
 
-      try {
-        const fileList = annotationData.attachments as unknown as File[];
-        
-        // Process attachments and upload to Firebase Storage
-        const uploadPromises = fileList.map(async (file, index) => {
-          const compressedBlob = await compressImage(file);
-          const uniqueFileName = `${Date.now()}-${file.name}`;
-          const attachmentRef = storageRef(storage, `projects/${projectId}/${dateString}/${uniqueFileName}`);
-          
-          await uploadBytes(attachmentRef, compressedBlob);
-          const downloadURL = await getDownloadURL(attachmentRef);
-
-          return {
-            id: `att-fire-${Date.now()}-${index}`,
-            url: downloadURL,
-            caption: file.name,
-            type: 'image' as 'image',
-          };
-        });
-
-        newAttachments = await Promise.all(uploadPromises);
-
-      } catch (uploadError) {
-        console.error("Error during file upload:", uploadError);
-        toast({ variant: 'destructive', title: "Errore di Upload", description: "Impossibile caricare gli allegati." });
-        // Don't proceed with adding the annotation if uploads fail
-        return;
-      }
+    try {
+      const fileList = annotationData.attachments as unknown as File[];
       
-      const currentUserAsStakeholder: Stakeholder = {
-        id: user.uid,
-        name: user.displayName || 'Utente Anonimo',
-        role: 'Direttore dei Lavori (DL)'
-      };
+      const uploadPromises = fileList.map(async (file, index) => {
+        const compressedBlob = await compressImage(file);
+        const uniqueFileName = `${Date.now()}-${file.name}`;
+        const attachmentRef = storageRef(storage, `projects/${projectId}/${dateString}/${uniqueFileName}`);
+        
+        await uploadBytes(attachmentRef, compressedBlob);
+        const downloadURL = await getDownloadURL(attachmentRef);
 
-      const newAnnotation: Annotation = {
-          id: `anno-local-${Date.now()}`,
-          timestamp: new Date(),
-          author: currentUserAsStakeholder, 
-          isSigned: false, 
-          type: annotationData.type,
-          content: annotationData.content,
-          attachments: newAttachments,
-      };
-
-      setDailyLog(currentLog => {
-          if (!currentLog) return null;
-          return {
-              ...currentLog,
-              annotations: [newAnnotation, ...currentLog.annotations],
-          };
+        return {
+          id: `att-fire-${Date.now()}-${index}`,
+          url: downloadURL,
+          caption: file.name,
+          type: 'image' as 'image',
+        };
       });
+
+      newAttachments = await Promise.all(uploadPromises);
+
+    } catch (uploadError) {
+      console.error("Error during file upload:", uploadError);
+      toast({ variant: 'destructive', title: "Errore di Upload", description: "Impossibile caricare gli allegati." });
+      return;
+    }
+    
+    const currentUserAsStakeholder: Stakeholder = {
+      id: user.uid,
+      name: user.displayName || 'Utente Anonimo',
+      role: 'Direttore dei Lavori (DL)'
     };
 
-    processAndAddAnnotation();
+    const newAnnotation: Annotation = {
+        id: `anno-local-${Date.now()}`,
+        timestamp: new Date(),
+        author: currentUserAsStakeholder, 
+        isSigned: false, 
+        type: annotationData.type,
+        content: annotationData.content,
+        attachments: newAttachments,
+    };
+
+    setDailyLog(currentLog => {
+        if (!currentLog) return null;
+        return {
+            ...currentLog,
+            annotations: [newAnnotation, ...currentLog.annotations],
+        };
+    });
 
   }, [user, projectId, dateString, toast]);
 
