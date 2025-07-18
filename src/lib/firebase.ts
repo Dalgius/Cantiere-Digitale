@@ -32,9 +32,12 @@ if (Object.values(firebaseConfig).some(value => !value)) {
   });
   // This robust initialization prevents re-initialization on hot reloads
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+  
+  // Explicitly pass the storageBucket from the config
+  storage = getStorage(app, firebaseConfig.storageBucket);
+  
   auth = getAuth(app);
   db = getFirestore(app);
-  storage = getStorage(app);
 
   // Set auth persistence to local storage if running in a browser environment
   if (typeof window !== "undefined" && auth) {

@@ -613,7 +613,7 @@ const handleExportToPDF = async () => {
       
       const uploadPromises = fileList.map(async (file, index) => {
         const compressedBlob = await compressImage(file);
-        const uniqueFileName = `${Date.now()}-${file.name}`;
+        const uniqueFileName = `${Date.now()}-${user.uid}-${file.name}`;
         const attachmentRef = storageRef(storage, `projects/${projectId}/${dateString}/${uniqueFileName}`);
         
         await uploadBytes(attachmentRef, compressedBlob);
