@@ -3,7 +3,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useForm, type SubmitHandler } from 'react-hook-form';
+import { useForm, type SubmitHandler, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/hooks/use-auth';
@@ -19,6 +19,7 @@ import { auth } from '@/lib/firebase';
 import { updateProfile } from 'firebase/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 
 const profileSchema = z.object({
   title: z.string().optional(),
@@ -36,7 +37,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = useForm<ProfileFormValues>({
+  const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       title: '',
@@ -45,8 +46,8 @@ export default function ProfilePage() {
     }
   });
   
-  const displayName = watch('displayName');
-  const currentTitle = watch('title');
+  const displayName = form.watch('displayName');
+  const currentTitle = form.watch('title');
 
   useEffect(() => {
     if (user) {
@@ -62,7 +63,7 @@ export default function ProfilePage() {
         userName = nameParts.slice(1).join(' ');
       }
       
-      reset({
+      form.reset({
         title: userTitle,
         displayName: userName,
         email: user.email || '',
@@ -72,7 +73,7 @@ export default function ProfilePage() {
         setAvatarPreview(user.photoURL);
       }
     }
-  }, [user, reset]);
+  }, [user, form.reset]);
   
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -155,7 +156,8 @@ export default function ProfilePage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="container py-8 max-w-2xl">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Card>
               <CardHeader className="items-center text-center">
                  <div className="relative">
@@ -190,40 +192,62 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="md:col-span-1 space-y-2">
                          <Label htmlFor="title">Qualifica</Label>
-                         <Select 
-                           onValueChange={(value) => setValue('title', value === 'none' ? '' : value)} 
-                           value={currentTitle || 'none'}
-                         >
-                           <SelectTrigger id="title">
-                             <SelectValue placeholder="Nessuno" />
-                           </SelectTrigger>
-                           <SelectContent>
-                             <SelectItem value="none">Nessuno</SelectItem>
-                             <SelectItem value="Ing.">Ing.</SelectItem>
-                             <SelectItem value="Arch.">Arch.</SelectItem>
-                             <SelectItem value="Geom.">Geom.</SelectItem>
-                           </SelectContent>
-                         </Select>
+                         <FormField
+                            control={form.control}
+                            name="title"
+                            render={({ field }) => (
+                                <FormItem>
+                                <Select onValueChange={field.onChange} value={field.value || 'none'}>
+                                    <FormControl>
+                                    <SelectTrigger id="title">
+                                        <SelectValue placeholder="Nessuno" />
+                                    </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        <SelectItem value="none">Nessuno</SelectItem>
+                                        <SelectItem value="Ing.">Ing.</SelectItem>
+                                        <SelectItem value="Arch.">Arch.</SelectItem>
+                                        <SelectItem value="Geom.">Geom.</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                </FormItem>
+                            )}
+                            />
                       </div>
                       <div className="md:col-span-2 space-y-2">
                         <Label htmlFor="displayName">Nome Visualizzato</Label>
-                        <Input 
-                          id="displayName" 
-                          {...register('displayName')} 
-                          placeholder="Il tuo nome" 
-                          disabled={isSubmitting} 
+                        <FormField
+                            control={form.control}
+                            name="displayName"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormControl>
+                                        <Input id="displayName" placeholder="Il tuo nome" disabled={isSubmitting} {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
                         />
-                        {errors.displayName && <p className="text-sm text-destructive">{errors.displayName.message}</p>}
                       </div>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input 
-                      id="email" 
-                      {...register('email')} 
-                      disabled 
-                      className="cursor-not-allowed bg-muted/50"
-                    />
+                     <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                           <FormItem>
+                             <FormControl>
+                               <Input 
+                                 id="email"
+                                 {...field}
+                                 disabled 
+                                 className="cursor-not-allowed bg-muted/50"
+                               />
+                             </FormControl>
+                           </FormItem>
+                        )}
+                     />
                   </div>
                   <div className="flex justify-end">
                     <Button type="submit" disabled={isSubmitting}>
@@ -234,7 +258,10 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
         </form>
+        </Form>
       </main>
     </div>
   );
 }
+
+    
