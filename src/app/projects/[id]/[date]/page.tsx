@@ -558,13 +558,44 @@ const handleExportToPDF = async () => {
   }
 };
 
-
-  const fileToDataUrl = (file: File): Promise<string> => {
+  const compressAndConvertToDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
       reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1024;
+          const MAX_HEIGHT = 1024;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height *= MAX_HEIGHT / height;
+              width = MAX_HEIGHT;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            return reject(new Error('Failed to get canvas context'));
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.8)); // Compress to JPEG
+        };
+        img.onerror = (error) => reject(error);
+      };
+      reader.onerror = (error) => reject(error);
     });
   };
 
@@ -585,10 +616,10 @@ const handleExportToPDF = async () => {
 
       // Process attachments if they exist
       const attachmentPromises = (annotationData.attachments as unknown as File[]).map(async (file, index) => {
-        const dataUrl = await fileToDataUrl(file);
+        const dataUrl = await compressAndConvertToDataUrl(file);
         return {
           id: `att-local-${Date.now()}-${index}`,
-          url: dataUrl, // Store as Data URL
+          url: dataUrl, // Store as compressed Data URL
           caption: file.name,
           type: 'image',
         };
@@ -735,3 +766,5 @@ const handleExportToPDF = async () => {
     </div>
   );
 }
+
+    
