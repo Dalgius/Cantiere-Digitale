@@ -679,41 +679,47 @@ const handleExportToPDF = async () => {
   }, []);
 
   const removeAnnotation = useCallback(async (annotationId: string) => {
-    let annotationToRemove: Annotation | undefined;
+    // Find the annotation to remove from the current state first.
+    const annotationToRemove = dailyLog?.annotations.find(a => a.id === annotationId);
     
-    // First, update the state to remove the annotation from the UI instantly.
+    if (!annotationToRemove) {
+      console.warn(`Annotation with id ${annotationId} not found for deletion.`);
+      return;
+    }
+
+    // Instantly update the UI by removing the annotation from the local state.
     setDailyLog(prevLog => {
-      if (!prevLog) return null;
-      annotationToRemove = prevLog.annotations.find(a => a.id === annotationId);
-      return {
-        ...prevLog,
-        annotations: prevLog.annotations.filter(a => a.id !== annotationId),
-      };
+        if (!prevLog) return null;
+        return {
+            ...prevLog,
+            annotations: prevLog.annotations.filter(a => a.id !== annotationId),
+        };
     });
 
-    // Then, if the annotation and its attachments exist, delete them from Storage.
-    if (annotationToRemove?.attachments) {
-      toast({
-        title: "Eliminazione in corso...",
-        description: "Rimozione dei file allegati.",
-      });
-      const deletePromises = annotationToRemove.attachments.map(att => deleteFileFromStorage(att.url));
-      try {
-        await Promise.all(deletePromises);
+    // If the annotation has attachments, proceed to delete them from Storage.
+    if (annotationToRemove.attachments && annotationToRemove.attachments.length > 0) {
         toast({
-          title: "File Eliminati",
-          description: "Gli allegati sono stati rimossi con successo.",
+            title: "Eliminazione in corso...",
+            description: "Rimozione dei file allegati in background.",
         });
-      } catch (error) {
-        console.error("Failed to delete one or more attachments:", error);
-        toast({
-          variant: 'destructive',
-          title: 'Errore',
-          description: 'Impossibile eliminare tutti gli allegati.',
-        });
-      }
+
+        const deletePromises = annotationToRemove.attachments.map(att => 
+            deleteFileFromStorage(att.url)
+        );
+        
+        try {
+            await Promise.all(deletePromises);
+            toast({
+                title: "File Eliminati",
+                description: "Gli allegati sono stati rimossi con successo.",
+            });
+        } catch (error) {
+            console.error("Failed to delete one or more attachments:", error);
+            // Non mostrare un toast di errore aggressivo qui, l'azione principale (rimozione dalla UI)
+            // è già avvenuta. Il fallimento qui significa solo che i file potrebbero rimanere orfani.
+        }
     }
-  }, []);
+  }, [dailyLog, toast]);
 
   const removeResource = useCallback((resourceId: string) => {
     setDailyLog(prevLog => {
