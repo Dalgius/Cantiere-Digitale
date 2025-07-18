@@ -104,7 +104,7 @@ export default function ProjectLogPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, notFound]);
 
 
   useEffect(() => {
@@ -155,22 +155,23 @@ export default function ProjectLogPage() {
       const ratio = canvasWidth / canvasHeight;
       let imgHeight = pdfWidth / ratio;
       
-      // If the content is smaller than a page, fit it to the page height
-      if (imgHeight > pdfHeight) {
-        imgHeight = pdfHeight;
-      }
-
-      let heightLeft = imgHeight;
+      let pages = Math.ceil(canvasHeight / (canvas.width * (pdfHeight / pdfWidth)));
+      let pageHeight = canvas.height / pages;
+      
       let position = 0;
+      for (let i = 0; i < pages; i++) {
+        const pageCanvas = await html2canvas(printRef.current, {
+          scale: 2,
+          y: pageHeight * i,
+          height: pageHeight,
+          windowHeight: pageHeight
+        });
 
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
+        const imgData = pageCanvas.toDataURL('image/png');
+        if (i > 0) {
+          pdf.addPage();
+        }
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
       }
 
       pdf.save(`GiornaleLavori_${project?.name}_${dateString}.pdf`);
@@ -285,9 +286,6 @@ export default function ProjectLogPage() {
                     </div>
                 )}
               </div>
-              <div className="grid grid-cols-1 gap-6 pt-4">
-                 <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
-              </div>
             </div>
             
             <NewAnnotationForm 
@@ -296,6 +294,10 @@ export default function ProjectLogPage() {
               projectDescription={project.description}
             />
 
+            <div className="grid grid-cols-1 gap-6 pt-4">
+               <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
+            </div>
+
           </div>
 
         </div>
@@ -303,5 +305,3 @@ export default function ProjectLogPage() {
     </div>
   );
 }
-
-    
