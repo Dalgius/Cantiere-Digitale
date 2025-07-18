@@ -24,7 +24,7 @@ const getBadgeVariant = (type: Annotation['type']) => {
     case 'Istruzioni / Ordine di Servizio':
       return 'default';
     default:
-      return 'secondary';
+      return 'outline';
   }
 };
 
