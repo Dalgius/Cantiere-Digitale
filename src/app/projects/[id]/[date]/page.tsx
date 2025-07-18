@@ -211,11 +211,12 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                     </p>
                   </div>
                   <span style={{ 
-                    backgroundColor: '#e5e7eb', 
-                    color: '#1f2937', 
-                    padding: '6px 12px', 
-                    borderRadius: '20px', 
-                    fontSize: '14px',
+                    backgroundColor: '#ffffff', 
+                    border: '1px solid #d1d5db',
+                    color: '#374151', 
+                    padding: '5px 10px', 
+                    borderRadius: '16px', 
+                    fontSize: '12px',
                     fontWeight: '500'
                   }}>
                     {annotation.type}
@@ -719,3 +720,5 @@ const handleExportToPDF = async () => {
     
 
   
+
+    
