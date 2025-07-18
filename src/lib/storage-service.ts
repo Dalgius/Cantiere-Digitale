@@ -1,3 +1,4 @@
+
 // src/lib/storage-service.ts
 'use server';
 
@@ -19,21 +20,26 @@ export async function deleteFileFromStorage(fileUrl: string): Promise<void> {
   }
 
   try {
-    // La funzione ref() può accettare l'URL HTTPS completo per creare un riferimento
-    const fileRef = ref(storage, fileUrl);
+    // Regex to extract the file path between /o/ and ?alt=media
+    const filePathMatch = fileUrl.match(/\/o\/(.*?)\?alt=media/);
+    if (!filePathMatch || filePathMatch.length < 2) {
+      throw new Error("Impossibile estrarre il percorso del file dall'URL.");
+    }
     
-    // Ora elimina il file usando questo riferimento
+    // The path is URL-encoded, so we need to decode it.
+    const decodedFilePath = decodeURIComponent(filePathMatch[1]);
+    
+    // Now create the reference with the decoded file path
+    const fileRef = ref(storage, decodedFilePath);
+    
     await deleteObject(fileRef);
-    console.log(`File eliminato con successo: ${fileUrl}`);
+    console.log(`File eliminato con successo: ${decodedFilePath}`);
 
   } catch (error: any) {
-    // Firebase restituisce 'storage/object-not-found' se il file non esiste già.
-    // Possiamo ignorare questo errore, dato che l'obiettivo è che il file non ci sia.
     if (error.code === 'storage/object-not-found') {
       console.warn(`File non trovato in Storage (forse già eliminato?): ${fileUrl}`);
     } else {
       console.error(`Errore durante l'eliminazione del file da Storage: ${fileUrl}`, error);
-      // Lanciamo di nuovo l'errore per renderlo visibile nei log del client
       throw new Error(`Impossibile eliminare il file: ${error.message}`);
     }
   }
