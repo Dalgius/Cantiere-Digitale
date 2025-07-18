@@ -270,7 +270,7 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                   border: '2px solid #374151', 
                   padding: '12px 8px', 
                   textAlign: 'left', 
-                  backgroundColor: '#f3f4f6',
+                  backgroundColor: '#ffffff',
                   fontWeight: 'bold',
                   width: '20%'
                 }}>
@@ -280,7 +280,7 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                   border: '2px solid #374151', 
                   padding: '12px 8px', 
                   textAlign: 'left', 
-                  backgroundColor: '#f3f4f6',
+                  backgroundColor: '#ffffff',
                   fontWeight: 'bold',
                   width: '35%'
                 }}>
@@ -290,7 +290,7 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                   border: '2px solid #374151', 
                   padding: '12px 8px', 
                   textAlign: 'center', 
-                  backgroundColor: '#f3f4f6',
+                  backgroundColor: '#ffffff',
                   fontWeight: 'bold',
                   width: '15%'
                 }}>
@@ -300,7 +300,7 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                   border: '2px solid #374151', 
                   padding: '12px 8px', 
                   textAlign: 'left', 
-                  backgroundColor: '#f3f4f6',
+                  backgroundColor: '#ffffff',
                   fontWeight: 'bold',
                   width: '30%'
                 }}>
@@ -717,3 +717,5 @@ const handleExportToPDF = async () => {
 
 
     
+
+  
