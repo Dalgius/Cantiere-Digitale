@@ -12,6 +12,7 @@ import { FileText, Download, Save, Loader2, Building2 } from "lucide-react";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useCallback, useRef, forwardRef } from "react";
+import { createPortal } from 'react-dom';
 import type { DailyLog, Project, Annotation, Resource, Stakeholder } from "@/lib/types";
 import { getDailyLog, getProject, getDailyLogsForProject, saveDailyLog } from "@/lib/data-service";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -156,6 +157,9 @@ export default function ProjectLogPage() {
   const { toast } = useToast();
   const { id: projectId, date: dateString } = params as { id: string, date: string };
   const printRef = useRef<HTMLDivElement>(null);
+  
+  const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null);
+  const [isPreparing, setIsPreparing] = useState(false);
 
   const [project, setProject] = useState<Project | null>(null);
   const [projectLogs, setProjectLogs] = useState<DailyLog[]>([]);
@@ -164,6 +168,28 @@ export default function ProjectLogPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
+  useEffect(() => {
+    // Create a dedicated container for the portal
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.left = '-9999px';
+    container.style.top = '-9999px';
+    container.style.width = '1px';
+    container.style.height = '1px';
+    container.style.overflow = 'hidden';
+    container.style.opacity = '0';
+    container.style.pointerEvents = 'none';
+    container.style.zIndex = '-9999';
+    
+    document.body.appendChild(container);
+    setPortalContainer(container);
+
+    return () => {
+      if (container.parentNode) {
+        container.parentNode.removeChild(container);
+      }
+    };
+  }, []);
 
   const fetchData = useCallback(async (currentProjectId: string, currentDateString: string) => {
     setIsLoading(true);
@@ -239,9 +265,10 @@ export default function ProjectLogPage() {
     if (!project || !dailyLog) return;
     
     setIsExporting(true);
+    setIsPreparing(true);
 
     try {
-      // Attendi che il componente sia montato nel DOM
+      // Attendi che il componente sia montato nel DOM del portal
       await new Promise(resolve => setTimeout(resolve, 200));
 
       const contentToPrint = printRef.current;
@@ -294,6 +321,7 @@ export default function ProjectLogPage() {
         });
     } finally {
       setIsExporting(false);
+      setIsPreparing(false);
     }
   };
 
@@ -360,23 +388,10 @@ export default function ProjectLogPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       
-      {/* Contenitore invisibile per la stampa */}
-      {isExporting && (
-        <div 
-          className="fixed pointer-events-none"
-           style={{ 
-             left: '-100vw',
-             top: '-100vh',
-             width: '1px',
-             height: '1px',
-             overflow: 'hidden',
-             opacity: 0,
-             zIndex: -9999,
-             visibility: 'hidden',
-           }}
-        >
-          <PrintableLog ref={printRef} project={project} log={dailyLog} />
-        </div>
+      {/* Usa il portal solo quando necessario */}
+      {isPreparing && portalContainer && createPortal(
+        <PrintableLog ref={printRef} project={project} log={dailyLog} />,
+        portalContainer
       )}
 
       <main className="container mx-auto p-4 md:p-8 flex-1">
