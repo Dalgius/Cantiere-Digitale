@@ -1,7 +1,7 @@
 // src/app/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Loader2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,10 @@ export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const removeProjectFromState = useCallback((projectId: string) => {
+    setProjects((currentProjects) => currentProjects.filter(p => p.id !== projectId));
+  }, []);
 
   useEffect(() => {
     // Only fetch if auth is done and we have a user
@@ -101,7 +105,11 @@ export default function DashboardPage() {
           ) : projects.length > 0 ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {projects.map((project) => (
-                <ProjectCard key={project.id} project={project} />
+                <ProjectCard 
+                  key={project.id} 
+                  project={project} 
+                  onProjectDeleted={removeProjectFromState}
+                />
               ))}
             </div>
           ) : (

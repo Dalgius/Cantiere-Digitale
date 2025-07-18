@@ -33,9 +33,10 @@ import { differenceInDays, startOfDay } from 'date-fns';
 
 interface ProjectCardProps {
   project: Project;
+  onProjectDeleted: (projectId: string) => void;
 }
 
-export function ProjectCard({ project }: ProjectCardProps) {
+export function ProjectCard({ project, onProjectDeleted }: ProjectCardProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
@@ -62,7 +63,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         description: `Il progetto "${project.name}" è stato eliminato con successo.`,
       });
       setIsAlertOpen(false); // Chiudi il dialogo
-      router.refresh(); // Aggiorna la lista dei progetti
+      onProjectDeleted(project.id); // Aggiorna lo stato della UI
     } catch (error) {
       console.error("Failed to delete project:", error);
       toast({
