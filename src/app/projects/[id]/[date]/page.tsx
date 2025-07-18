@@ -165,28 +165,17 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
 
       {/* Annotazioni con titolo forzatamente centrato */}
       <div style={{ marginBottom: '30px' }}>
-        <div style={{
-          backgroundColor: '#f3f4f6',
-          padding: '20px',
-          borderRadius: '8px',
-          border: '1px solid #e5e7eb',
+        <h3 style={{ 
+          fontSize: '22px', 
+          fontWeight: 'bold', 
+          borderBottom: '2px solid #9ca3af', 
+          paddingBottom: '10px', 
           marginBottom: '20px',
-          width: '100%',
-          boxSizing: 'border-box'
+          color: '#1f2937',
+          textAlign: 'center'
         }}>
-          <h3 style={{ 
-            fontSize: '22px', 
-            fontWeight: 'bold', 
-            color: '#1f2937',
-            margin: '0',
-            textAlign: 'center',
-            display: 'block',
-            width: '100%',
-            letterSpacing: '1px'
-          }}>
-            DESCRIZIONE LAVORI SVOLTI
-          </h3>
-        </div>
+          Annotazioni della Giornata
+        </h3>
         
         {log.annotations.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
