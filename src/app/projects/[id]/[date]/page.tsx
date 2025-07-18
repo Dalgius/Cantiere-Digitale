@@ -173,6 +173,7 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                 <th style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'left', backgroundColor: '#f9fafb' }}>Tipo</th>
                 <th style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'left', backgroundColor: '#f9fafb' }}>Descrizione</th>
                 <th style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right', backgroundColor: '#f9fafb' }}>Q.tà</th>
+                <th style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right', backgroundColor: '#f9fafb' }}>Ore</th>
               </tr>
             </thead>
             <tbody>
@@ -185,11 +186,12 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                     {resource.notes && <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic' }}>{resource.notes}</div>}
                   </td>
                   <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{resource.quantity}</td>
+                  <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{resource.hours || '-'}</td>
                 </tr>
               ))}
               {log.resources.length === 0 && (
                  <tr>
-                   <td colSpan={3} style={{ border: '1px solid #e5e7eb', padding: '16px', textAlign: 'center', color: '#6b7280' }}>
+                   <td colSpan={4} style={{ border: '1px solid #e5e7eb', padding: '16px', textAlign: 'center', color: '#6b7280' }}>
                       Nessuna risorsa registrata.
                    </td>
                  </tr>
@@ -508,5 +510,3 @@ export default function ProjectLogPage() {
     </div>
   );
 }
-
-    

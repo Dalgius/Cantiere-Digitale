@@ -64,5 +64,3 @@ export type DailyLog = {
   isValidated: boolean;
   project?: Project; // Optional, as it's not always present
 };
-
-    
