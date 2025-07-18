@@ -49,22 +49,36 @@ export default function ProfilePage() {
   const currentTitle = watch('title');
 
   useEffect(() => {
-    if (user) {
-      const [title, ...nameParts] = user.displayName?.split(' ') || ['', ''];
-      const name = nameParts.join(' ');
-
+    if (user && user.displayName) {
+      const nameParts = user.displayName.split(' ');
+      const potentialTitle = nameParts[0];
       const validTitles = ['Ing.', 'Arch.', 'Geom.'];
-      const userTitle = validTitles.includes(title) ? title : '';
-      const userName = userTitle ? name : user.displayName || '';
+      
+      let userTitle = '';
+      let userName = '';
 
+      if (validTitles.includes(potentialTitle)) {
+        userTitle = potentialTitle;
+        userName = nameParts.slice(1).join(' ');
+      } else {
+        userName = user.displayName;
+      }
+      
       reset({
         title: userTitle,
         displayName: userName,
         email: user.email || '',
       });
+
       if (user.photoURL) {
         setAvatarPreview(user.photoURL);
       }
+    } else if (user) {
+       reset({
+        title: '',
+        displayName: '',
+        email: user.email || '',
+      });
     }
   }, [user, reset]);
   
@@ -90,7 +104,7 @@ export default function ProfilePage() {
 
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
-    if (!user) {
+    if (!auth.currentUser) { // Use auth.currentUser directly as this is a client component
        toast({
         variant: 'destructive',
         title: 'Errore',
@@ -102,7 +116,7 @@ export default function ProfilePage() {
     try {
       const fullDisplayName = data.title ? `${data.title} ${data.displayName}` : data.displayName;
       
-      await updateProfile(user, { 
+      await updateProfile(auth.currentUser, { 
           displayName: fullDisplayName,
           // photoURL: In a real app, you would get this URL from your file upload service, e.g., avatarPreview
       });
@@ -112,7 +126,7 @@ export default function ProfilePage() {
         description: 'Le tue informazioni sono state salvate con successo.',
       });
 
-      // Force a refresh of the page to make sure all components get the new user data
+      // Force a refresh of the router to make sure all components get the new user data
       router.refresh();
 
     } catch (error) {
