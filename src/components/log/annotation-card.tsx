@@ -73,12 +73,12 @@ export function AnnotationCard({ annotation, isLogValidated, onDelete }: Annotat
             <h4 className="text-xs font-semibold text-muted-foreground mb-2">Allegati</h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
               {annotation.attachments.map(att => (
-                <div key={att.id} className="group relative">
+                <a key={att.id} href={att.url} target="_blank" rel="noopener noreferrer" className="group relative">
                   <Image src={att.url} alt={att.caption} width={150} height={100} className="rounded-md object-cover aspect-video" data-ai-hint="construction site" />
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
                     <p className="text-white text-xs text-center">{att.caption}</p>
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           </div>

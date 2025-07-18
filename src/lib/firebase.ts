@@ -4,6 +4,7 @@
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { getFirestore, Timestamp, type Firestore } from "firebase/firestore";
 import { getAuth, type Auth, setPersistence, browserLocalPersistence } from "firebase/auth";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 // These are the required variables from your .env.local file
 const firebaseConfig = {
@@ -18,6 +19,7 @@ const firebaseConfig = {
 let app: FirebaseApp | undefined;
 let auth: Auth | undefined;
 let db: Firestore | undefined;
+let storage: FirebaseStorage | undefined;
 
 // Check that all environment variables are present before initializing
 if (Object.values(firebaseConfig).some(value => !value)) {
@@ -32,9 +34,10 @@ if (Object.values(firebaseConfig).some(value => !value)) {
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
   auth = getAuth(app);
   db = getFirestore(app);
+  storage = getStorage(app);
 
   // Set auth persistence to local storage if running in a browser environment
-  if (typeof window !== "undefined") {
+  if (typeof window !== "undefined" && auth) {
     setPersistence(auth, browserLocalPersistence)
       .catch((error) => {
           console.error("Firebase Auth persistence error:", error);
@@ -44,4 +47,4 @@ if (Object.values(firebaseConfig).some(value => !value)) {
   console.log('[Firebase] Initialization successful.');
 }
 
-export { app, db, auth, Timestamp };
+export { app, db, auth, storage, Timestamp };

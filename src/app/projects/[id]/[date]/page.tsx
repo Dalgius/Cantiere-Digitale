@@ -15,6 +15,8 @@ import { useEffect, useState, useCallback, useRef, forwardRef } from "react";
 import { createPortal } from 'react-dom';
 import type { DailyLog, Project, Annotation, Resource, Stakeholder, Attachment } from "@/lib/types";
 import { getDailyLog, getProject, getDailyLogsForProject, saveDailyLog } from "@/lib/data-service";
+import { storage } from "@/lib/firebase";
+import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DailyLogNav } from "@/components/log/daily-log-nav";
 import { Header } from "@/components/layout/header";
@@ -214,7 +216,9 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                     color: '#374151', 
                     padding: '5px 10px', 
                     fontSize: '12px',
-                    fontWeight: '500'
+                    fontWeight: '500',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '9999px',
                   }}>
                     {annotation.type}
                   </span>
@@ -558,7 +562,7 @@ const handleExportToPDF = async () => {
   }
 };
 
-  const compressAndConvertToDataUrl = (file: File): Promise<string> => {
+  const compressImage = (file: File): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -567,31 +571,24 @@ const handleExportToPDF = async () => {
         img.src = event.target?.result as string;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 1024;
-          const MAX_HEIGHT = 1024;
-          let width = img.width;
-          let height = img.height;
+          const MAX_WIDTH = 1280; // A reasonable width for reports
+          
+          const scaleFactor = MAX_WIDTH / img.width;
+          canvas.width = MAX_WIDTH;
+          canvas.height = img.height * scaleFactor;
 
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height *= MAX_HEIGHT / height;
-              width = MAX_HEIGHT;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
           const ctx = canvas.getContext('2d');
           if (!ctx) {
             return reject(new Error('Failed to get canvas context'));
           }
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', 0.8)); // Compress to JPEG
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              return reject(new Error('Canvas to Blob conversion failed'));
+            }
+            resolve(blob);
+          }, 'image/jpeg', 0.85); // Compress to JPEG with 85% quality
         };
         img.onerror = (error) => reject(error);
       };
@@ -600,56 +597,78 @@ const handleExportToPDF = async () => {
   };
 
   const addAnnotation = useCallback(async (annotationData: Omit<Annotation, 'id' | 'timestamp' | 'author' | 'isSigned'>) => {
-    if (!user) {
-        toast({ variant: 'destructive', title: "Errore", description: "Devi essere loggato per aggiungere una nota." });
+    if (!user || !projectId || !dateString) {
+        toast({ variant: 'destructive', title: "Errore", description: "Dati utente o di progetto mancanti." });
         return;
     }
+     if (!storage) {
+      toast({ variant: 'destructive', title: "Errore", description: "Servizio di storage non disponibile." });
+      return;
+    }
     
-    setDailyLog(prevLog => {
-      if (!prevLog) return null;
+    // UI update is now optimistic but happens inside a new function
+    // to handle the async nature of file uploads gracefully.
+    const processAndAddAnnotation = async () => {
+      let newAttachments: Attachment[] = [];
 
+      try {
+        const fileList = annotationData.attachments as unknown as File[];
+        
+        // Process attachments and upload to Firebase Storage
+        const uploadPromises = fileList.map(async (file, index) => {
+          const compressedBlob = await compressImage(file);
+          const uniqueFileName = `${Date.now()}-${file.name}`;
+          const attachmentRef = storageRef(storage, `projects/${projectId}/${dateString}/${uniqueFileName}`);
+          
+          await uploadBytes(attachmentRef, compressedBlob);
+          const downloadURL = await getDownloadURL(attachmentRef);
+
+          return {
+            id: `att-fire-${Date.now()}-${index}`,
+            url: downloadURL,
+            caption: file.name,
+            type: 'image' as 'image',
+          };
+        });
+
+        newAttachments = await Promise.all(uploadPromises);
+
+      } catch (uploadError) {
+        console.error("Error during file upload:", uploadError);
+        toast({ variant: 'destructive', title: "Errore di Upload", description: "Impossibile caricare gli allegati." });
+        // Don't proceed with adding the annotation if uploads fail
+        return;
+      }
+      
       const currentUserAsStakeholder: Stakeholder = {
         id: user.uid,
         name: user.displayName || 'Utente Anonimo',
         role: 'Direttore dei Lavori (DL)'
       };
 
-      // Process attachments if they exist
-      const attachmentPromises = (annotationData.attachments as unknown as File[]).map(async (file, index) => {
-        const dataUrl = await compressAndConvertToDataUrl(file);
-        return {
-          id: `att-local-${Date.now()}-${index}`,
-          url: dataUrl, // Store as compressed Data URL
-          caption: file.name,
-          type: 'image',
-        };
+      const newAnnotation: Annotation = {
+          id: `anno-local-${Date.now()}`,
+          timestamp: new Date(),
+          author: currentUserAsStakeholder, 
+          isSigned: false, 
+          type: annotationData.type,
+          content: annotationData.content,
+          attachments: newAttachments,
+      };
+
+      setDailyLog(currentLog => {
+          if (!currentLog) return null;
+          return {
+              ...currentLog,
+              annotations: [newAnnotation, ...currentLog.annotations],
+          };
       });
-      
-      // We resolve promises immediately to update UI, but the data is already self-contained (Data URI)
-      Promise.all(attachmentPromises).then(newAttachments => {
-        setDailyLog(currentLog => {
-            if (!currentLog) return null;
-            const newAnnotation: Annotation = {
-                id: `anno-local-${Date.now()}`,
-                timestamp: new Date(),
-                author: currentUserAsStakeholder, 
-                isSigned: false, 
-                type: annotationData.type,
-                content: annotationData.content,
-                attachments: newAttachments,
-            };
-             return {
-                ...currentLog,
-                annotations: [newAnnotation, ...currentLog.annotations],
-            };
-        });
-      });
-      
-      // Return the previous log state immediately for a responsive UI
-      // The state will be properly updated once the promises resolve.
-      return prevLog; 
-    });
-  }, [user, toast]);
+    };
+
+    processAndAddAnnotation();
+
+  }, [user, projectId, dateString, toast]);
+
 
   const addResource = useCallback((resourceData: Omit<Resource, 'id'>) => {
     setDailyLog(prevLog => {
@@ -766,5 +785,3 @@ const handleExportToPDF = async () => {
     </div>
   );
 }
-
-    

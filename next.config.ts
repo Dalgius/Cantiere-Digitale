@@ -1,3 +1,4 @@
+
 // next.config.ts
 import type { NextConfig } from 'next';
 
@@ -9,16 +10,17 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    // This allows the Next.js dev server to accept requests from the
-    // Firebase Studio environment.
-    allowedDevOrigins: ["https://*.cloudworkstations.dev"],
-  },
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'placehold.co',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
         port: '',
         pathname: '/**',
       },
