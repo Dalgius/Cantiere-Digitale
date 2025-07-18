@@ -23,7 +23,6 @@ import html2canvas from 'html2canvas';
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
-import { createPortal } from "react-dom";
 
 function PageLoader() {
   return (
@@ -155,7 +154,6 @@ export default function ProjectLogPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [shouldRenderPrintable, setShouldRenderPrintable] = useState(false);
 
 
   const fetchData = useCallback(async (currentProjectId: string, currentDateString: string) => {
@@ -229,18 +227,15 @@ export default function ProjectLogPage() {
   }
 
   const handleExportToPDF = async () => {
-    setIsExporting(true);
-    setShouldRenderPrintable(true); // Abilita il rendering
+    const contentToPrint = printRef.current;
+    if (!contentToPrint) {
+      toast({ variant: 'destructive', title: 'Errore', description: 'Impossibile trovare il contenuto da stampare.' });
+      return;
+    }
 
+    setIsExporting(true);
+    
     try {
-      // Attendi che il componente sia renderizzato nel portale
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
-      const contentToPrint = printRef.current;
-      if (!contentToPrint) {
-        throw new Error("Elemento per la stampa non trovato.");
-      }
-      
       const canvas = await html2canvas(contentToPrint, {
           scale: 2, // Aumenta la risoluzione
           useCORS: true,
@@ -286,9 +281,8 @@ export default function ProjectLogPage() {
         });
     } finally {
       setIsExporting(false);
-      setShouldRenderPrintable(false); // Rimuovi il componente dopo l'uso
     }
-};
+  };
 
 
   const addAnnotation = useCallback((annotationData: Omit<Annotation, 'id' | 'timestamp' | 'author' | 'isSigned' | 'attachments'>) => {
@@ -353,12 +347,19 @@ export default function ProjectLogPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       
-       {shouldRenderPrintable && typeof window !== 'undefined' && createPortal(
-        <div className="absolute -left-[9999px] -top-[9999px]">
-          <PrintableLog ref={printRef} project={project} log={dailyLog} />
-        </div>,
-        document.body
-      )}
+      {/* Contenitore invisibile per la stampa */}
+      <div 
+        className="fixed pointer-events-none opacity-0 -z-50"
+        style={{ 
+          left: '-9999px', 
+          top: '-9999px',
+          width: '1px',
+          height: '1px',
+          overflow: 'hidden'
+        }}
+      >
+        <PrintableLog ref={printRef} project={project} log={dailyLog} />
+      </div>
 
       <main className="container mx-auto p-4 md:p-8 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-8">
@@ -397,9 +398,7 @@ export default function ProjectLogPage() {
               projectDescription={project.description}
             />
 
-            <div className="grid grid-cols-1 gap-6 pt-4">
-               <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
-            </div>
+            <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
 
              <div className="block lg:hidden pt-4">
                 <ActionsCard {...actionHandlers} />
@@ -412,3 +411,5 @@ export default function ProjectLogPage() {
     </div>
   );
 }
+
+    
