@@ -611,7 +611,7 @@ const handleExportToPDF = async () => {
     try {
       const fileList = annotationData.attachments as unknown as File[];
       
-      const uploadPromises = fileList.map(async (file, index) => {
+      const uploadPromises = Array.from(fileList).map(async (file, index) => {
         const compressedBlob = await compressImage(file);
         const uniqueFileName = `${Date.now()}-${user.uid}-${file.name}`;
         const attachmentRef = storageRef(storage, `projects/${projectId}/${dateString}/${uniqueFileName}`);
@@ -778,5 +778,3 @@ const handleExportToPDF = async () => {
     </div>
   );
 }
-
-    

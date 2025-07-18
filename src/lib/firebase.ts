@@ -29,12 +29,13 @@ if (Object.values(firebaseConfig).some(value => !value)) {
     apiKey: firebaseConfig.apiKey ? '***' : undefined,
     authDomain: firebaseConfig.authDomain,
     projectId: firebaseConfig.projectId,
+    storageBucket: firebaseConfig.storageBucket, // Log the bucket being used
   });
   // This robust initialization prevents re-initialization on hot reloads
   app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
   
   // Explicitly pass the storageBucket from the config
-  storage = getStorage(app, firebaseConfig.storageBucket);
+  storage = getStorage(app);
   
   auth = getAuth(app);
   db = getFirestore(app);
