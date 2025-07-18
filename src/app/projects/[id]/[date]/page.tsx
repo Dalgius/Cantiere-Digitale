@@ -94,63 +94,67 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
         display: 'block'
       }}
     >
-      {/* Header con icona sostituita */}
+      {/* Header modificato - scritta centrata in alto */}
       <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
+        textAlign: 'center',
         borderBottom: '3px solid #1f2937', 
         paddingBottom: '20px',
         marginBottom: '30px'
       }}>
-        <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 'bold', margin: '0 0 10px 0', color: '#1f2937' }}>
-            {project.name}
-          </h1>
-          <p style={{ fontSize: '16px', margin: '0', color: '#374151' }}>
-            Cliente: {project.client}
-          </p>
-          <p style={{ fontSize: '16px', margin: '0', color: '#374151' }}>
-            Impresa: {project.contractor}
-          </p>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          {/* Sostituisci l'icona SVG con un'emoji o testo */}
-          <div style={{ 
-            fontSize: '48px', 
-            margin: '0 auto 10px auto',
-            width: '60px',
-            height: '60px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: '#f3f4f6',
-            borderRadius: '8px'
-          }}>
-            🏗️
-          </div>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', margin: '0', color: '#1f2937' }}>
-            Giornale dei Lavori
-          </h2>
+        <h1 style={{ 
+          fontSize: '32px', 
+          fontWeight: 'bold', 
+          margin: '0 0 20px 0', 
+          color: '#1f2937',
+          textTransform: 'uppercase',
+          letterSpacing: '2px'
+        }}>
+          GIORNALE DEI LAVORI
+        </h1>
+        <h2 style={{ 
+          fontSize: '24px', 
+          fontWeight: '600', 
+          margin: '0 0 15px 0', 
+          color: '#374151'
+        }}>
+          {project.name}
+        </h2>
+        <div style={{ 
+          fontSize: '16px', 
+          color: '#6b7280',
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '30px',
+          flexWrap: 'wrap'
+        }}>
+          <span>Cliente: {project.client}</span>
+          <span>Impresa: {project.contractor}</span>
         </div>
       </div>
 
-      {/* Dati del Giorno */}
+      {/* Data semplificata - solo la data */}
       <div style={{ marginBottom: '30px' }}>
         <div style={{ 
           border: '2px solid #e5e7eb', 
           borderRadius: '8px', 
           padding: '20px',
-          backgroundColor: '#f9fafb'
+          backgroundColor: '#f9fafb',
+          textAlign: 'center'
         }}>
-          <h3 style={{ fontSize: '18px', fontWeight: 'bold', margin: '0 0 20px 0', color: '#1f2937' }}>
-            Dati del Giorno - {format(log.date, "eeee d MMMM yyyy", { locale: it })}
+          <h3 style={{ 
+            fontSize: '20px', 
+            fontWeight: 'bold', 
+            margin: '0', 
+            color: '#1f2937'
+          }}>
+            {format(log.date, "eeee d MMMM yyyy", { locale: it })}
           </h3>
           <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(3, 1fr)', 
-            gap: '20px',
-            fontSize: '16px'
+            display: 'flex', 
+            justifyContent: 'center',
+            gap: '30px',
+            fontSize: '16px',
+            marginTop: '15px'
           }}>
             <div><strong>Stato:</strong> {log.weather.state}</div>
             <div><strong>Temperatura:</strong> {log.weather.temperature}°C</div>
@@ -239,7 +243,7 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
         )}
       </div>
 
-      {/* Risorse */}
+      {/* Risorse - tabella modificata senza colonna Ore, con colonna Note */}
       <div style={{ marginBottom: '30px' }}>
         <h3 style={{ 
           fontSize: '22px', 
@@ -264,7 +268,8 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                   padding: '12px 8px', 
                   textAlign: 'left', 
                   backgroundColor: '#f3f4f6',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  width: '20%'
                 }}>
                   Tipo
                 </th>
@@ -273,7 +278,8 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                   padding: '12px 8px', 
                   textAlign: 'left', 
                   backgroundColor: '#f3f4f6',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  width: '35%'
                 }}>
                   Descrizione
                 </th>
@@ -282,18 +288,20 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                   padding: '12px 8px', 
                   textAlign: 'center', 
                   backgroundColor: '#f3f4f6',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  width: '15%'
                 }}>
                   Quantità
                 </th>
                 <th style={{ 
                   border: '2px solid #374151', 
                   padding: '12px 8px', 
-                  textAlign: 'center', 
+                  textAlign: 'left', 
                   backgroundColor: '#f3f4f6',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  width: '30%'
                 }}>
-                  Ore
+                  Note
                 </th>
               </tr>
             </thead>
@@ -318,11 +326,6 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                         {resource.company}
                       </div>
                     )}
-                    {resource.notes && (
-                      <div style={{ fontSize: '12px', color: '#6b7280', fontStyle: 'italic', marginTop: '4px' }}>
-                        {resource.notes}
-                      </div>
-                    )}
                   </td>
                   <td style={{ 
                     border: '1px solid #d1d5db', 
@@ -334,11 +337,10 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                   </td>
                   <td style={{ 
                     border: '1px solid #d1d5db', 
-                    padding: '10px 8px', 
-                    textAlign: 'center',
+                    padding: '10px 8px',
                     verticalAlign: 'top'
                   }}>
-                    {resource.hours || '-'}
+                    {resource.notes || '-'}
                   </td>
                 </tr>
               ))}
@@ -708,3 +710,5 @@ const handleExportToPDF = async () => {
     </div>
   );
 }
+
+    
