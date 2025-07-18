@@ -9,12 +9,13 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileUp, Lock, PenSquare, Paperclip, CheckCircle2 } from 'lucide-react';
+import { FileUp, Lock, PenSquare, Paperclip, CheckCircle2, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
 interface AnnotationCardProps {
   annotation: Annotation;
   isLogValidated: boolean;
+  onDelete: (annotationId: string) => void;
 }
 
 const getBadgeVariant = (type: Annotation['type']) => {
@@ -28,20 +29,14 @@ const getBadgeVariant = (type: Annotation['type']) => {
   }
 };
 
-export function AnnotationCard({ annotation, isLogValidated }: AnnotationCardProps) {
-  const [isSigned, setIsSigned] = useState(annotation.isSigned);
+export function AnnotationCard({ annotation, isLogValidated, onDelete }: AnnotationCardProps) {
   const [formattedTimestamp, setFormattedTimestamp] = useState('');
 
   useEffect(() => {
     // This now runs only on the client, avoiding hydration mismatch.
-    setFormattedTimestamp(format(annotation.timestamp, 'd MMMM yyyy, HH:mm', { locale: it }));
+    setFormattedTimestamp(format(new Date(annotation.timestamp), 'd MMMM yyyy, HH:mm', { locale: it }));
   }, [annotation.timestamp]);
 
-  const handleSign = () => {
-    // In a real app, this would trigger a server action and digital signature flow.
-    setIsSigned(true);
-  };
-  
   const getAvatarFallback = (name: string) => {
     if (!name) return 'U';
     const parts = name.split(' ');
@@ -50,7 +45,6 @@ export function AnnotationCard({ annotation, isLogValidated }: AnnotationCardPro
     }
     return name.substring(0, 2).toUpperCase();
   }
-
 
   return (
     <Card className={`transition-all ${isLogValidated ? 'bg-secondary/30' : 'bg-card'}`}>
@@ -65,16 +59,16 @@ export function AnnotationCard({ annotation, isLogValidated }: AnnotationCardPro
             <CardDescription>{annotation.author.role}</CardDescription>
           </div>
         </div>
-        <div className="text-right">
-          <Badge variant={getBadgeVariant(annotation.type)}>{annotation.type}</Badge>
-          <p className="text-xs text-muted-foreground mt-1">
-            {formattedTimestamp}
-          </p>
+        <div className="text-right flex items-center gap-2">
+           <Badge variant={getBadgeVariant(annotation.type)}>{annotation.type}</Badge>
+           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => onDelete(annotation.id)} disabled={isLogValidated}>
+             <Trash2 className="h-4 w-4" />
+           </Button>
         </div>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-foreground whitespace-pre-wrap">{annotation.content}</p>
-        {annotation.attachments.length > 0 && (
+        {annotation.attachments && annotation.attachments.length > 0 && (
           <div className="mt-4">
             <h4 className="text-xs font-semibold text-muted-foreground mb-2">Allegati</h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -90,8 +84,10 @@ export function AnnotationCard({ annotation, isLogValidated }: AnnotationCardPro
           </div>
         )}
       </CardContent>
-      <CardFooter>
-        
+       <CardFooter>
+         <p className="text-xs text-muted-foreground mt-1 w-full text-right">
+            {formattedTimestamp}
+          </p>
       </CardFooter>
     </Card>
   );

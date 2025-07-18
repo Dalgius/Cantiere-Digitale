@@ -8,12 +8,12 @@ import { NewAnnotationForm } from "@/components/log/new-annotation-form";
 import { ResourcesTable } from "@/components/log/resources-table";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Save, Loader2, Building2 } from "lucide-react";
+import { FileText, Download, Save, Loader2, Building2, Trash2 } from "lucide-react";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useCallback, useRef, forwardRef } from "react";
 import { createPortal } from 'react-dom';
-import type { DailyLog, Project, Annotation, Resource, Stakeholder } from "@/lib/types";
+import type { DailyLog, Project, Annotation, Resource, Stakeholder, Attachment } from "@/lib/types";
 import { getDailyLog, getProject, getDailyLogsForProject, saveDailyLog } from "@/lib/data-service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DailyLogNav } from "@/components/log/daily-log-nav";
@@ -559,7 +559,16 @@ const handleExportToPDF = async () => {
 };
 
 
-  const addAnnotation = useCallback((annotationData: Omit<Annotation, 'id' | 'timestamp' | 'author' | 'isSigned' | 'attachments'>) => {
+  const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const addAnnotation = useCallback(async (annotationData: Omit<Annotation, 'id' | 'timestamp' | 'author' | 'isSigned'>) => {
     if (!user) {
         toast({ variant: 'destructive', title: "Errore", description: "Devi essere loggato per aggiungere una nota." });
         return;
@@ -574,20 +583,40 @@ const handleExportToPDF = async () => {
         role: 'Direttore dei Lavori (DL)'
       };
 
-      const newAnnotation: Annotation = {
-        ...annotationData,
-        id: `anno-local-${Date.now()}`,
-        timestamp: new Date(),
-        author: currentUserAsStakeholder, 
-        attachments: [],
-        isSigned: false, 
-      };
+      // Process attachments if they exist
+      const attachmentPromises = (annotationData.attachments as unknown as File[]).map(async (file, index) => {
+        const dataUrl = await fileToDataUrl(file);
+        return {
+          id: `att-local-${Date.now()}-${index}`,
+          url: dataUrl, // Store as Data URL
+          caption: file.name,
+          type: 'image',
+        };
+      });
       
-      const updatedLog = {
-        ...prevLog,
-        annotations: [newAnnotation, ...prevLog.annotations],
-      };
-      return updatedLog;
+      // We resolve promises immediately to update UI, but the data is already self-contained (Data URI)
+      Promise.all(attachmentPromises).then(newAttachments => {
+        setDailyLog(currentLog => {
+            if (!currentLog) return null;
+            const newAnnotation: Annotation = {
+                id: `anno-local-${Date.now()}`,
+                timestamp: new Date(),
+                author: currentUserAsStakeholder, 
+                isSigned: false, 
+                type: annotationData.type,
+                content: annotationData.content,
+                attachments: newAttachments,
+            };
+             return {
+                ...currentLog,
+                annotations: [newAnnotation, ...currentLog.annotations],
+            };
+        });
+      });
+      
+      // Return the previous log state immediately for a responsive UI
+      // The state will be properly updated once the promises resolve.
+      return prevLog; 
     });
   }, [user, toast]);
 
@@ -672,7 +701,7 @@ const handleExportToPDF = async () => {
                     key={annotation.id} 
                     annotation={annotation} 
                     isLogValidated={dailyLog.isValidated}
-                    onDelete={removeAnnotation}
+                    onDelete={() => removeAnnotation(annotation.id)}
                     />
                 ))}
                 {dailyLog.annotations.length === 0 && (

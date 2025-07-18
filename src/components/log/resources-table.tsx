@@ -5,7 +5,7 @@ import type { Resource, ResourceType } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "../ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Badge } from "../ui/badge";
 import {
   Dialog,
@@ -27,10 +27,11 @@ import { useToast } from "@/hooks/use-toast";
 interface ResourcesTableProps {
   resources: Resource[];
   onAddResource: (resource: Omit<Resource, 'id'>) => void;
+  onRemoveResource: (resourceId: string) => void;
   isDisabled: boolean;
 }
 
-export function ResourcesTable({ resources, onAddResource, isDisabled }: ResourcesTableProps) {
+export function ResourcesTable({ resources, onAddResource, onRemoveResource, isDisabled }: ResourcesTableProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [type, setType] = useState<ResourceType | ''>('');
   const [description, setDescription] = useState('');
@@ -130,6 +131,7 @@ export function ResourcesTable({ resources, onAddResource, isDisabled }: Resourc
               <TableHead>Tipo</TableHead>
               <TableHead>Descrizione</TableHead>
               <TableHead className="text-right">Q.tà</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -146,11 +148,16 @@ export function ResourcesTable({ resources, onAddResource, isDisabled }: Resourc
                     {resource.notes && <p className="text-xs text-muted-foreground font-normal italic">{resource.notes}</p>}
                 </TableCell>
                 <TableCell className="text-right">{resource.quantity}</TableCell>
+                <TableCell className="text-center">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onRemoveResource(resource.id)} disabled={isDisabled}>
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </TableCell>
               </TableRow>
             ))}
              {resources.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={3} className="text-center h-24">Nessuna risorsa registrata.</TableCell>
+                    <TableCell colSpan={4} className="text-center h-24">Nessuna risorsa registrata.</TableCell>
                 </TableRow>
              )}
           </TableBody>
