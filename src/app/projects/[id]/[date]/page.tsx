@@ -154,6 +154,8 @@ export default function ProjectLogPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [shouldRenderPrintable, setShouldRenderPrintable] = useState(false);
+
 
   const fetchData = useCallback(async (currentProjectId: string, currentDateString: string) => {
     setIsLoading(true);
@@ -226,47 +228,53 @@ export default function ProjectLogPage() {
   }
 
   const handleExportToPDF = async () => {
-    const contentToPrint = printRef.current;
-    if (!contentToPrint) return;
-
+    setShouldRenderPrintable(true);
     setIsExporting(true);
 
     try {
-        const canvas = await html2canvas(contentToPrint, {
-            scale: 2, // Aumenta la risoluzione
-            useCORS: true,
-            logging: false,
-        });
+      // Attendi che il componente sia renderizzato
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const contentToPrint = printRef.current;
+      if (!contentToPrint) {
+        throw new Error("Elemento per la stampa non trovato.");
+      }
+      
+      const canvas = await html2canvas(contentToPrint, {
+          scale: 2, // Aumenta la risoluzione
+          useCORS: true,
+          logging: false,
+      });
 
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF({
-            orientation: 'portrait',
-            unit: 'mm',
-            format: 'a4',
-        });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+      });
 
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const ratio = canvasWidth / pdfWidth;
-        const imgHeight = canvasHeight / ratio;
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const ratio = canvasWidth / pdfWidth;
+      const imgHeight = canvasHeight / ratio;
 
-        let heightLeft = imgHeight;
-        let position = 0;
+      let heightLeft = imgHeight;
+      let position = 0;
 
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pdfHeight;
 
-        while (heightLeft > 0) {
-            position -= pdfHeight;
-            pdf.addPage();
-            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-            heightLeft -= pdfHeight;
-        }
+      while (heightLeft > 0) {
+          position -= pdfHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+          heightLeft -= pdfHeight;
+      }
 
-        pdf.save(`GiornaleLavori_${project?.name}_${dateString}.pdf`);
+      pdf.save(`GiornaleLavori_${project?.name}_${dateString}.pdf`);
 
     } catch (error) {
         console.error("Failed to export PDF:", error);
@@ -276,7 +284,8 @@ export default function ProjectLogPage() {
             description: "Impossibile generare il PDF.",
         });
     } finally {
-        setIsExporting(false);
+      setIsExporting(false);
+      setShouldRenderPrintable(false); // Rimuovi il componente dopo l'uso
     }
 };
 
@@ -342,10 +351,13 @@ export default function ProjectLogPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
-       {/* Contenitore invisibile per la stampa */}
-      <div className="absolute -left-[9999px] -top-[9999px]">
-        <PrintableLog ref={printRef} project={project} log={dailyLog} />
-      </div>
+      
+       {/* Renderizza solo quando necessario */}
+      {shouldRenderPrintable && (
+        <div className="absolute -left-[9999px] -top-[9999px]">
+          <PrintableLog ref={printRef} project={project} log={dailyLog} />
+        </div>
+      )}
 
       <main className="container mx-auto p-4 md:p-8 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-8">
@@ -399,3 +411,4 @@ export default function ProjectLogPage() {
     </div>
   );
 }
+
