@@ -49,19 +49,17 @@ export default function ProfilePage() {
   const currentTitle = watch('title');
 
   useEffect(() => {
-    if (user && user.displayName) {
-      const nameParts = user.displayName.split(' ');
-      const potentialTitle = nameParts[0];
+    if (user) {
+      const nameParts = user.displayName?.split(' ') || [];
+      const potentialTitle = nameParts[0] || '';
       const validTitles = ['Ing.', 'Arch.', 'Geom.'];
       
       let userTitle = '';
-      let userName = '';
+      let userName = user.displayName || '';
 
       if (validTitles.includes(potentialTitle)) {
         userTitle = potentialTitle;
         userName = nameParts.slice(1).join(' ');
-      } else {
-        userName = user.displayName;
       }
       
       reset({
@@ -73,12 +71,6 @@ export default function ProfilePage() {
       if (user.photoURL) {
         setAvatarPreview(user.photoURL);
       }
-    } else if (user) {
-       reset({
-        title: '',
-        displayName: '',
-        email: user.email || '',
-      });
     }
   }, [user, reset]);
   
@@ -104,7 +96,7 @@ export default function ProfilePage() {
 
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
-    if (!auth.currentUser) { // Use auth.currentUser directly as this is a client component
+    if (!auth.currentUser) {
        toast({
         variant: 'destructive',
         title: 'Errore',
@@ -118,7 +110,9 @@ export default function ProfilePage() {
       
       await updateProfile(auth.currentUser, { 
           displayName: fullDisplayName,
-          // photoURL: In a real app, you would get this URL from your file upload service, e.g., avatarPreview
+          // TODO: In a real app, upload avatarPreview to storage and get a URL.
+          // For now, we are not updating the photoURL.
+          // photoURL: avatarPreview, 
       });
       
       toast({
@@ -126,7 +120,8 @@ export default function ProfilePage() {
         description: 'Le tue informazioni sono state salvate con successo.',
       });
 
-      // Force a refresh of the router to make sure all components get the new user data
+      // Force a refresh of the page to make sure all components (like the header)
+      // get the new user data from the re-initialized AuthProvider.
       router.refresh();
 
     } catch (error) {
