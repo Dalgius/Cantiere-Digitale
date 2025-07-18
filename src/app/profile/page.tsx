@@ -15,7 +15,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { updateUserProfile } from '@/lib/data-service';
+import { auth } from '@/lib/firebase'; // Import auth
+import { updateProfile } from 'firebase/auth'; // Import updateProfile
 
 const profileSchema = z.object({
   displayName: z.string().min(1, 'Il nome è obbligatorio'),
@@ -47,7 +48,9 @@ export default function ProfilePage() {
   }, [user, reset]);
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
-    if (!user) {
+    // auth.currentUser is the correct way to get the user on the client
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
        toast({
         variant: 'destructive',
         title: 'Errore',
@@ -57,15 +60,17 @@ export default function ProfilePage() {
     }
     setIsSubmitting(true);
     try {
-      await updateUserProfile({ displayName: data.displayName });
+      // Directly call the Firebase SDK function on the client
+      await updateProfile(currentUser, { displayName: data.displayName });
+      
       toast({
         title: 'Profilo Aggiornato',
         description: 'Le tue informazioni sono state salvate con successo.',
       });
-      // Aggiorna il nome visualizzato nell'interfaccia utente dopo il successo
-      if (auth.currentUser) {
-        setValue('displayName', auth.currentUser.displayName || '');
-      }
+
+      // Manually update the form value to reflect the change immediately
+      setValue('displayName', data.displayName);
+
     } catch (error) {
       console.error('Failed to update profile:', error);
       toast({
