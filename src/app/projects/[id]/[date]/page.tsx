@@ -227,17 +227,21 @@ export default function ProjectLogPage() {
   }
 
   const handleExportToPDF = async () => {
-    const contentToPrint = printRef.current;
-    if (!contentToPrint) {
-      toast({ variant: 'destructive', title: 'Errore', description: 'Impossibile trovare il contenuto da stampare.' });
-      return;
-    }
-
-    setIsExporting(true);
+    if (!project || !dailyLog) return;
     
+    setIsExporting(true);
+
     try {
+      // Attendi che il componente sia montato nel DOM
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const contentToPrint = printRef.current;
+      if (!contentToPrint) {
+        throw new Error("Impossibile trovare il contenuto da stampare.");
+      }
+
       const canvas = await html2canvas(contentToPrint, {
-          scale: 2, // Aumenta la risoluzione
+          scale: 2,
           useCORS: true,
           logging: false,
       });
@@ -270,14 +274,14 @@ export default function ProjectLogPage() {
           heightLeft -= pdfHeight;
       }
 
-      pdf.save(`GiornaleLavori_${project?.name}_${dateString}.pdf`);
+      pdf.save(`GiornaleLavori_${project.name}_${dateString}.pdf`);
 
     } catch (error) {
         console.error("Failed to export PDF:", error);
         toast({
             variant: 'destructive',
             title: "Errore di Esportazione",
-            description: "Impossibile generare il PDF.",
+            description: (error as Error).message || "Impossibile generare il PDF.",
         });
     } finally {
       setIsExporting(false);
@@ -347,19 +351,24 @@ export default function ProjectLogPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       
-      {/* Contenitore invisibile per la stampa */}
-      <div 
-        className="fixed pointer-events-none opacity-0 -z-50"
-        style={{ 
-          left: '-9999px', 
-          top: '-9999px',
-          width: '1px',
-          height: '1px',
-          overflow: 'hidden'
-        }}
-      >
-        <PrintableLog ref={printRef} project={project} log={dailyLog} />
-      </div>
+      {/* Contenitore invisibile per la stampa - Renderizzato solo durante l'esportazione */}
+      {isExporting && (
+        <div 
+          className="fixed pointer-events-none"
+           style={{ 
+             left: '-100vw',
+             top: '-100vh',
+             width: '1px',
+             height: '1px',
+             overflow: 'hidden',
+             opacity: 0,
+             zIndex: -9999,
+             visibility: 'hidden',
+           }}
+        >
+          <PrintableLog ref={printRef} project={project} log={dailyLog} />
+        </div>
+      )}
 
       <main className="container mx-auto p-4 md:p-8 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-8">
@@ -391,7 +400,7 @@ export default function ProjectLogPage() {
                     </div>
                 )}
               </div>
-            
+
             <NewAnnotationForm 
               onAddAnnotation={addAnnotation} 
               isDisabled={false}
@@ -411,5 +420,3 @@ export default function ProjectLogPage() {
     </div>
   );
 }
-
-    
