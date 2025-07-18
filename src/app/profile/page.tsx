@@ -19,7 +19,6 @@ import { auth } from '@/lib/firebase';
 import { updateProfile } from 'firebase/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
-import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 
 const profileSchema = z.object({
   title: z.string().optional(),
@@ -37,7 +36,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
-  const form = useForm<ProfileFormValues>({
+  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       title: '',
@@ -46,8 +45,8 @@ export default function ProfilePage() {
     }
   });
   
-  const displayName = form.watch('displayName');
-  const currentTitle = form.watch('title');
+  const displayName = watch('displayName');
+  const currentTitle = watch('title');
 
   useEffect(() => {
     if (user) {
@@ -63,18 +62,16 @@ export default function ProfilePage() {
         userName = nameParts.slice(1).join(' ');
       }
       
-      form.reset({
-        title: userTitle,
-        displayName: userName,
-        email: user.email || '',
-      });
+      setValue('title', userTitle);
+      setValue('displayName', userName);
+      setValue('email', user.email || '');
 
       if (user.photoURL) {
         setAvatarPreview(user.photoURL);
       }
     }
-  }, [user, form.reset]);
-  
+  }, [user, setValue]);
+
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
@@ -87,7 +84,6 @@ export default function ProfilePage() {
         setAvatarPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
-      // In a real app, you'd upload this file to a service and get back a URL
       toast({
         title: "Immagine selezionata",
         description: "Salva le modifiche per applicare la nuova foto profilo.",
@@ -95,10 +91,9 @@ export default function ProfilePage() {
     }
   };
 
-
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
     if (!auth.currentUser) {
-       toast({
+      toast({
         variant: 'destructive',
         title: 'Errore',
         description: 'Devi essere autenticato per aggiornare il profilo.',
@@ -107,13 +102,10 @@ export default function ProfilePage() {
     }
     setIsSubmitting(true);
     try {
-      const fullDisplayName = data.title ? `${data.title} ${data.displayName}` : data.displayName;
+      const fullDisplayName = data.title && data.title !== 'none' ? `${data.title} ${data.displayName}` : data.displayName;
       
       await updateProfile(auth.currentUser, { 
-          displayName: fullDisplayName,
-          // TODO: In a real app, upload avatarPreview to storage and get a URL.
-          // For now, we are not updating the photoURL.
-          // photoURL: avatarPreview, 
+        displayName: fullDisplayName,
       });
       
       toast({
@@ -121,10 +113,7 @@ export default function ProfilePage() {
         description: 'Le tue informazioni sono state salvate con successo.',
       });
 
-      // Force a refresh of the page to make sure all components (like the header)
-      // get the new user data from the re-initialized AuthProvider.
       router.refresh();
-
     } catch (error) {
       console.error('Failed to update profile:', error);
       toast({
@@ -156,112 +145,92 @@ export default function ProfilePage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       <main className="container py-8 max-w-2xl">
-        <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Card>
-              <CardHeader className="items-center text-center">
-                 <div className="relative">
-                    <Avatar className="h-24 w-24 border-2 border-primary/20">
-                     <AvatarImage src={avatarPreview || undefined} alt={displayName || 'User'} data-ai-hint="person face"/>
-                     <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
-                   </Avatar>
-                   <Button 
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-background"
-                      onClick={handleAvatarClick}
-                    >
-                      <Pencil className="h-4 w-4" />
-                      <span className="sr-only">Cambia foto profilo</span>
-                   </Button>
-                   <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={handleFileChange} 
-                      className="hidden"
-                      accept="image/png, image/jpeg"
-                    />
-                 </div>
-                 <div className="pt-2">
-                    <CardTitle className="font-headline text-2xl">{currentTitle} {displayName || 'Utente'}</CardTitle>
-                    <CardDescription>Visualizza e aggiorna le tue informazioni personali.</CardDescription>
-                 </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="md:col-span-1 space-y-2">
-                         <Label htmlFor="title">Qualifica</Label>
-                         <FormField
-                            control={form.control}
-                            name="title"
-                            render={({ field }) => (
-                                <FormItem>
-                                <Select onValueChange={field.onChange} value={field.value || 'none'}>
-                                    <FormControl>
-                                    <SelectTrigger id="title">
-                                        <SelectValue placeholder="Nessuno" />
-                                    </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <SelectItem value="none">Nessuno</SelectItem>
-                                        <SelectItem value="Ing.">Ing.</SelectItem>
-                                        <SelectItem value="Arch.">Arch.</SelectItem>
-                                        <SelectItem value="Geom.">Geom.</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                </FormItem>
-                            )}
-                            />
-                      </div>
-                      <div className="md:col-span-2 space-y-2">
-                        <Label htmlFor="displayName">Nome Visualizzato</Label>
-                        <FormField
-                            control={form.control}
-                            name="displayName"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormControl>
-                                        <Input id="displayName" placeholder="Il tuo nome" disabled={isSubmitting} {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                      </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                     <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                           <FormItem>
-                             <FormControl>
-                               <Input 
-                                 id="email"
-                                 {...field}
-                                 disabled 
-                                 className="cursor-not-allowed bg-muted/50"
-                               />
-                             </FormControl>
-                           </FormItem>
-                        )}
-                     />
-                  </div>
-                  <div className="flex justify-end">
-                    <Button type="submit" disabled={isSubmitting}>
-                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Salva Modifiche
-                    </Button>
-                  </div>
-              </CardContent>
-            </Card>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <Card>
+            <CardHeader className="items-center text-center">
+              <div className="relative">
+                <Avatar className="h-24 w-24 border-2 border-primary/20">
+                  <AvatarImage src={avatarPreview || undefined} alt={displayName || 'User'} data-ai-hint="person face"/>
+                  <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
+                </Avatar>
+                <Button 
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-background"
+                  onClick={handleAvatarClick}
+                >
+                  <Pencil className="h-4 w-4" />
+                  <span className="sr-only">Cambia foto profilo</span>
+                </Button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  className="hidden"
+                  accept="image/png, image/jpeg"
+                />
+              </div>
+              <div className="pt-2">
+                <CardTitle className="font-headline text-2xl">{currentTitle && currentTitle !== 'none' ? currentTitle : ''} {displayName || 'Utente'}</CardTitle>
+                <CardDescription>Visualizza e aggiorna le tue informazioni personali.</CardDescription>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-1 space-y-2">
+                  <Label htmlFor="title">Qualifica</Label>
+                  <Controller
+                    name="title"
+                    control={control}
+                    render={({ field }) => (
+                      <Select 
+                        onValueChange={(value) => field.onChange(value)}
+                        value={field.value || 'none'}
+                      >
+                        <SelectTrigger id="title">
+                          <SelectValue placeholder="Nessuno" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Nessuno</SelectItem>
+                          <SelectItem value="Ing.">Ing.</SelectItem>
+                          <SelectItem value="Arch.">Arch.</SelectItem>
+                          <SelectItem value="Geom.">Geom.</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+                <div className="md:col-span-2 space-y-2">
+                  <Label htmlFor="displayName">Nome Visualizzato</Label>
+                  <Input 
+                    id="displayName" 
+                    {...register('displayName')} 
+                    placeholder="Il tuo nome" 
+                    disabled={isSubmitting} 
+                  />
+                  {errors.displayName && <p className="text-sm text-destructive">{errors.displayName.message}</p>}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  {...register('email')} 
+                  disabled 
+                  className="cursor-not-allowed bg-muted/50"
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Salva Modifiche
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </form>
-        </Form>
       </main>
     </div>
   );
 }
-
-    
