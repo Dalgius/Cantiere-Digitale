@@ -1,8 +1,7 @@
-
 // src/components/layout/header.tsx
 'use client';
 
-import { Building2, Settings, User, LogOut } from "lucide-react"
+import { Settings, User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { 
   DropdownMenu, 
@@ -17,6 +16,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { handleSignOut } from "@/lib/auth-service";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Logo } from "./logo";
 
 export function Header() {
   const { user } = useAuth();
@@ -47,7 +47,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur-sm">
       <div className="container flex h-16 items-center">
         <Link href="/" className="flex items-center gap-2 mr-4">
-          <Building2 className="h-6 w-6 text-primary" />
+          <Logo className="h-8 w-8 text-primary" />
           <span className="font-headline text-lg font-bold">Cantiere Digitale</span>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-4">
