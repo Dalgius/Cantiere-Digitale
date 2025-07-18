@@ -1,4 +1,3 @@
-
 // src/app/profile/page.tsx
 'use client';
 
@@ -35,8 +34,9 @@ export default function ProfilePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [isFormReady, setIsFormReady] = useState(false);
 
-  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<ProfileFormValues>({
+  const { register, handleSubmit, reset, setValue, watch, control, formState: { errors } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
       title: '',
@@ -48,29 +48,49 @@ export default function ProfilePage() {
   const displayName = watch('displayName');
   const currentTitle = watch('title');
 
-  useEffect(() => {
-    if (user) {
-      const nameParts = user.displayName?.split(' ') || [];
-      const potentialTitle = nameParts[0] || '';
-      const validTitles = ['Ing.', 'Arch.', 'Geom.'];
-      
-      let userTitle = '';
-      let userName = user.displayName || '';
+  // Funzione per parsare il displayName
+  const parseDisplayName = (fullName: string) => {
+    const nameParts = fullName?.split(' ') || [];
+    const potentialTitle = nameParts[0] || '';
+    const validTitles = ['Ing.', 'Arch.', 'Geom.'];
+    
+    let userTitle = '';
+    let userName = fullName || '';
 
-      if (validTitles.includes(potentialTitle)) {
-        userTitle = potentialTitle;
-        userName = nameParts.slice(1).join(' ');
-      }
+    if (validTitles.includes(potentialTitle)) {
+      userTitle = potentialTitle;
+      userName = nameParts.slice(1).join(' ');
+    }
+
+    return { userTitle, userName };
+  };
+
+  useEffect(() => {
+    if (user && user.displayName) {
+      console.log('User data loaded:', user); // Debug
       
-      setValue('title', userTitle);
-      setValue('displayName', userName);
-      setValue('email', user.email || '');
+      const { userTitle, userName } = parseDisplayName(user.displayName);
+      
+      console.log('Parsed title:', userTitle); // Debug
+      console.log('Parsed name:', userName); // Debug
+      
+      // Usa reset per assicurarti che tutti i valori siano impostati correttamente
+      reset({
+        title: userTitle,
+        displayName: userName,
+        email: user.email || '',
+      });
 
       if (user.photoURL) {
         setAvatarPreview(user.photoURL);
       }
+
+      // Aggiungi un piccolo delay per assicurarti che il form sia pronto
+      setTimeout(() => {
+        setIsFormReady(true);
+      }, 100);
     }
-  }, [user, setValue]);
+  }, [user, reset]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
@@ -102,7 +122,7 @@ export default function ProfilePage() {
     }
     setIsSubmitting(true);
     try {
-      const fullDisplayName = data.title && data.title !== 'none' ? `${data.title} ${data.displayName}` : data.displayName;
+      const fullDisplayName = data.title ? `${data.title} ${data.displayName}` : data.displayName;
       
       await updateProfile(auth.currentUser, { 
         displayName: fullDisplayName,
@@ -126,7 +146,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (authLoading || !user) {
+  if (authLoading || !user || !isFormReady) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -172,7 +192,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="pt-2">
-                <CardTitle className="font-headline text-2xl">{currentTitle && currentTitle !== 'none' ? currentTitle : ''} {displayName || 'Utente'}</CardTitle>
+                <CardTitle className="font-headline text-2xl">{currentTitle} {displayName || 'Utente'}</CardTitle>
                 <CardDescription>Visualizza e aggiorna le tue informazioni personali.</CardDescription>
               </div>
             </CardHeader>
@@ -185,7 +205,11 @@ export default function ProfilePage() {
                     control={control}
                     render={({ field }) => (
                       <Select 
-                        onValueChange={(value) => field.onChange(value)}
+                        onValueChange={(value) => {
+                          const newValue = value === 'none' ? '' : value;
+                          field.onChange(newValue);
+                          console.log('Select value changed to:', newValue); // Debug
+                        }}
                         value={field.value || 'none'}
                       >
                         <SelectTrigger id="title">

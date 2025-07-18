@@ -82,10 +82,10 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
               />
             </div>
           </CardContent>
-          <CardFooter className="flex justify-between items-center gap-2">
-            <div className="flex-1 flex gap-2">
-              <Button variant="outline" type="button" asChild disabled={isDisabled} className="flex-1 md:flex-none">
-                <label htmlFor="file-upload" className="cursor-pointer">
+          <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button variant="outline" type="button" asChild disabled={isDisabled} className="w-full sm:w-auto">
+                <label htmlFor="file-upload" className="cursor-pointer w-full">
                   <Paperclip className="mr-2 h-4 w-4" />
                   Allega File
                   <input id="file-upload" type="file" multiple className="sr-only" disabled={isDisabled} />
@@ -96,10 +96,10 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
                 draftContent={content}
                 onTextImproved={handleUseImprovedText}
                 variant="outline" 
-                className="flex-1 md:flex-none" 
+                className="w-full sm:w-auto" 
               />
             </div>
-            <Button type="submit" disabled={isDisabled}>
+            <Button type="submit" disabled={isDisabled} className="w-full sm:w-auto">
               <Send className="mr-2 h-4 w-4" />
               Aggiungi
             </Button>
