@@ -8,10 +8,10 @@ import { NewAnnotationForm } from "@/components/log/new-annotation-form";
 import { ResourcesTable } from "@/components/log/resources-table";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Save, Loader2 } from "lucide-react";
+import { FileText, Download, Save, Loader2, Building2 } from "lucide-react";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, forwardRef } from "react";
 import type { DailyLog, Project, Annotation, Resource, Stakeholder } from "@/lib/types";
 import { getDailyLog, getProject, getDailyLogsForProject, saveDailyLog } from "@/lib/data-service";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,6 +20,8 @@ import { Header } from "@/components/layout/header";
 import { useAuth } from "@/hooks/use-auth";
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { format } from "date-fns";
+import { it } from "date-fns/locale";
 
 function PageLoader() {
   return (
@@ -70,6 +72,72 @@ function ActionsCard({ onSave, onExport, isSaving, isExporting }: { onSave: () =
         </Card>
     );
 }
+
+// Componente dedicato per il layout di stampa
+const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLog }>(({ project, log }, ref) => {
+  return (
+    <div ref={ref} className="p-10 bg-white text-black font-sans" style={{ width: '210mm', minHeight: '297mm' }}>
+        <header className="flex justify-between items-center border-b-2 border-gray-800 pb-4">
+            <div>
+                <h1 className="text-2xl font-bold">{project.name}</h1>
+                <p className="text-sm">Cliente: {project.client}</p>
+                <p className="text-sm">Impresa: {project.contractor}</p>
+            </div>
+            <div className="text-right">
+                <Building2 className="h-10 w-10 text-gray-700 mx-auto" />
+                <h2 className="text-lg font-semibold">Giornale dei Lavori</h2>
+            </div>
+        </header>
+
+        <section className="my-6">
+          <Card className="border-gray-400">
+            <CardHeader>
+              <CardTitle className="text-base">Dati del Giorno - {format(log.date, "eeee d MMMM yyyy", { locale: it })}</CardTitle>
+            </CardHeader>
+            <CardContent>
+               <div className="grid grid-cols-4 gap-4 text-sm">
+                  <div><span className="font-semibold">Stato:</span> {log.weather.state}</div>
+                  <div><span className="font-semibold">Temperatura:</span> {log.weather.temperature}°C</div>
+                  <div className="col-span-2"><span className="font-semibold">Precipitazioni:</span> {log.weather.precipitation}</div>
+               </div>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="my-6">
+            <h3 className="text-xl font-bold border-b border-gray-400 pb-2 mb-4">Annotazioni della Giornata</h3>
+            <div className="space-y-4">
+              {log.annotations.map(annotation => (
+                <div key={annotation.id} className="p-3 border border-gray-200 rounded-md text-sm break-inside-avoid">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <p className="font-bold">{annotation.author.name} <span className="font-normal text-gray-600">({annotation.author.role})</span></p>
+                      <p className="text-xs text-gray-500">{format(annotation.timestamp, 'd MMMM yyyy, HH:mm', { locale: it })}</p>
+                    </div>
+                    <Badge variant="secondary" className="text-black">{annotation.type}</Badge>
+                  </div>
+                  <p className="whitespace-pre-wrap">{annotation.content}</p>
+                </div>
+              ))}
+              {log.annotations.length === 0 && <p className="text-gray-500">Nessuna annotazione per questa giornata.</p>}
+            </div>
+        </section>
+        
+        <section className="my-6">
+            <h3 className="text-xl font-bold border-b border-gray-400 pb-2 mb-4">Risorse Impiegate</h3>
+            <div className="break-inside-avoid">
+              <ResourcesTable resources={log.resources} onAddResource={() => {}} isDisabled={true} />
+            </div>
+        </section>
+
+        <footer className="pt-10 mt-10 border-t border-gray-300 text-xs text-gray-500 text-center">
+            <p>Cantiere Digitale - Pagina generata il {format(new Date(), "d MMMM yyyy", { locale: it })}</p>
+        </footer>
+    </div>
+  );
+});
+PrintableLog.displayName = 'PrintableLog';
+
 
 export default function ProjectLogPage() {
   const params = useParams();
@@ -157,50 +225,59 @@ export default function ProjectLogPage() {
   }
 
   const handleExportToPDF = async () => {
-    if (!printRef.current) return;
+    const contentToPrint = printRef.current;
+    if (!contentToPrint) return;
+
     setIsExporting(true);
+
     try {
-      const canvas = await html2canvas(printRef.current, { scale: 2 });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: 'a4',
-      });
+        const canvas = await html2canvas(contentToPrint, {
+            scale: 2, // Aumenta la risoluzione
+            useCORS: true,
+            logging: false,
+        });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      
-      let heightLeft = canvasHeight;
-      let position = 0;
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvasHeight * imgWidth) / canvasWidth;
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'mm',
+            format: 'a4',
+        });
 
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= pdfHeight;
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / pdfWidth;
+        const imgHeight = canvasHeight / ratio;
 
-      while (heightLeft > 0) {
-        position = heightLeft - canvasHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
         heightLeft -= pdfHeight;
-      }
-      
-      pdf.save(`GiornaleLavori_${project?.name}_${dateString}.pdf`);
+
+        while (heightLeft > 0) {
+            position -= pdfHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+            heightLeft -= pdfHeight;
+        }
+
+        pdf.save(`GiornaleLavori_${project?.name}_${dateString}.pdf`);
 
     } catch (error) {
-       console.error("Failed to export PDF:", error);
-       toast({
-        variant: 'destructive',
-        title: "Errore di Esportazione",
-        description: "Impossibile generare il PDF.",
-      });
+        console.error("Failed to export PDF:", error);
+        toast({
+            variant: 'destructive',
+            title: "Errore di Esportazione",
+            description: "Impossibile generare il PDF.",
+        });
     } finally {
-      setIsExporting(false);
+        setIsExporting(false);
     }
-  };
+};
 
 
   const addAnnotation = useCallback((annotationData: Omit<Annotation, 'id' | 'timestamp' | 'author' | 'isSigned' | 'attachments'>) => {
@@ -264,6 +341,11 @@ export default function ProjectLogPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
+       {/* Contenitore invisibile per la stampa */}
+      <div className="absolute -left-[9999px] -top-[9999px]">
+        <PrintableLog ref={printRef} project={project} log={dailyLog} />
+      </div>
+
       <main className="container mx-auto p-4 md:p-8 flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-8">
           
@@ -281,8 +363,7 @@ export default function ProjectLogPage() {
           </aside>
 
           <div className="lg:col-span-3 space-y-6 mt-8 lg:mt-0">
-            <div ref={printRef} className="space-y-6 bg-background rounded-lg p-1">
-              <DailyLogHeader logDate={dailyLog.date} weather={dailyLog.weather} isDisabled={false} onWeatherChange={(newWeather) => setDailyLog(prev => prev ? {...prev, weather: newWeather} : null)} />
+             <DailyLogHeader logDate={dailyLog.date} weather={dailyLog.weather} isDisabled={false} onWeatherChange={(newWeather) => setDailyLog(prev => prev ? {...prev, weather: newWeather} : null)} />
               
               <div className="space-y-4">
                 <h2 className="font-headline text-2xl font-bold">Timeline del Giorno</h2>
@@ -295,7 +376,6 @@ export default function ProjectLogPage() {
                     </div>
                 )}
               </div>
-            </div>
             
             <NewAnnotationForm 
               onAddAnnotation={addAnnotation} 
