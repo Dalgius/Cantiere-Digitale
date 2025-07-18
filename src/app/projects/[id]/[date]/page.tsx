@@ -171,7 +171,8 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
           borderBottom: '2px solid #9ca3af', 
           paddingBottom: '10px', 
           marginBottom: '20px',
-          color: '#1f2937'
+          color: '#1f2937',
+          textAlign: 'center'
         }}>
           Annotazioni della Giornata
         </h3>
@@ -710,5 +711,3 @@ const handleExportToPDF = async () => {
     </div>
   );
 }
-
-    
