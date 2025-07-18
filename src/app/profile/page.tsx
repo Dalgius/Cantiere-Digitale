@@ -44,6 +44,7 @@ export default function ProfilePage() {
   });
   
   const displayName = watch('displayName');
+  const currentTitle = watch('title');
 
   useEffect(() => {
     if (user) {
@@ -51,15 +52,17 @@ export default function ProfilePage() {
       const name = nameParts.join(' ');
 
       const validTitles = ['Ing.', 'Arch.', 'Geom.'];
-      const currentTitle = validTitles.includes(title) ? title : '';
-      const currentName = currentTitle ? name : user.displayName || '';
+      const userTitle = validTitles.includes(title) ? title : '';
+      const userName = userTitle ? name : user.displayName || '';
 
       reset({
-        title: currentTitle,
-        displayName: currentName,
+        title: userTitle,
+        displayName: userName,
         email: user.email || '',
       });
-      setAvatarPreview(user.photoURL);
+      if (user.photoURL) {
+        setAvatarPreview(user.photoURL);
+      }
     }
   }, [user, reset]);
   
@@ -100,15 +103,26 @@ export default function ProfilePage() {
       
       await updateProfile(currentUser, { 
           displayName: fullDisplayName,
-          // photoURL: In a real app, you would get this URL from your file upload service
+          // photoURL: In a real app, you would get this URL from your file upload service, e.g., avatarPreview
       });
+      
+      // Update the user object in the auth context to reflect changes immediately
+      // This is a client-side update for immediate feedback
+      if(auth.currentUser) {
+        auth.currentUser.displayName = fullDisplayName;
+        // auth.currentUser.photoURL = avatarPreview;
+      }
       
       toast({
         title: 'Profilo Aggiornato',
         description: 'Le tue informazioni sono state salvate con successo.',
       });
 
-      setValue('displayName', data.displayName);
+      // Reset form with new values to ensure consistency
+      reset({
+        ...data,
+        title: data.title || '',
+      })
 
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -130,6 +144,13 @@ export default function ProfilePage() {
     );
   }
 
+  const getAvatarFallback = () => {
+    if (displayName) {
+      return displayName.substring(0, 2).toUpperCase();
+    }
+    return user.email?.substring(0, 2).toUpperCase() || 'U';
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -139,8 +160,8 @@ export default function ProfilePage() {
               <CardHeader className="items-center text-center">
                  <div className="relative">
                     <Avatar className="h-24 w-24 border-2 border-primary/20">
-                     <AvatarImage src={avatarPreview || `https://placehold.co/96x96.png`} alt={user.displayName || 'User'} data-ai-hint="person face"/>
-                     <AvatarFallback>{user.email?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>
+                     <AvatarImage src={avatarPreview || undefined} alt={displayName || 'User'} data-ai-hint="person face"/>
+                     <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
                    </Avatar>
                    <Button 
                       type="button"
@@ -161,7 +182,7 @@ export default function ProfilePage() {
                     />
                  </div>
                  <div className="pt-2">
-                    <CardTitle className="font-headline text-2xl">{displayName || 'Utente'}</CardTitle>
+                    <CardTitle className="font-headline text-2xl">{currentTitle} {displayName || 'Utente'}</CardTitle>
                     <CardDescription>Visualizza e aggiorna le tue informazioni personali.</CardDescription>
                  </div>
               </CardHeader>
@@ -169,12 +190,15 @@ export default function ProfilePage() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="md:col-span-1 space-y-2">
                          <Label htmlFor="title">Qualifica</Label>
-                         <Select onValueChange={(value) => setValue('title', value)} defaultValue={watch('title')}>
+                         <Select 
+                           onValueChange={(value) => setValue('title', value === 'none' ? '' : value)} 
+                           value={currentTitle || 'none'}
+                         >
                            <SelectTrigger id="title">
                              <SelectValue placeholder="Nessuno" />
                            </SelectTrigger>
                            <SelectContent>
-                             <SelectItem value="">Nessuno</SelectItem>
+                             <SelectItem value="none">Nessuno</SelectItem>
                              <SelectItem value="Ing.">Ing.</SelectItem>
                              <SelectItem value="Arch.">Arch.</SelectItem>
                              <SelectItem value="Geom.">Geom.</SelectItem>
