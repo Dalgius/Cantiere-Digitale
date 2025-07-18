@@ -22,6 +22,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { Badge } from "@/components/ui/badge";
 
 function PageLoader() {
   return (
@@ -398,5 +399,3 @@ export default function ProjectLogPage() {
     </div>
   );
 }
-
-    
