@@ -23,7 +23,6 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
-import { Badge } from "@/components/ui/badge";
 
 function PageLoader() {
   return (
@@ -80,70 +79,138 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
   return (
     <div 
       ref={ref} 
-      className="p-10 bg-white text-black font-sans"
       style={{ 
         width: '210mm', 
         minHeight: '297mm',
         padding: '40px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        backgroundColor: '#ffffff',
+        color: '#000000',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '12px',
+        lineHeight: '1.4',
+        margin: '0',
+        position: 'relative',
+        display: 'block',
+        contain: 'layout style paint',
+        isolation: 'isolate'
       }}
     >
-        <header className="flex justify-between items-center border-b-2 border-gray-800 pb-4">
-            <div>
-                <h1 className="text-2xl font-bold">{project.name}</h1>
-                <p className="text-sm">Cliente: {project.client}</p>
-                <p className="text-sm">Impresa: {project.contractor}</p>
-            </div>
-            <div className="text-right">
-                <Building2 className="h-10 w-10 text-gray-700 mx-auto" />
-                <h2 className="text-lg font-semibold">Giornale dei Lavori</h2>
-            </div>
-        </header>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #1f2937', paddingBottom: '16px' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: '0 0 8px 0' }}>{project.name}</h1>
+          <p style={{ fontSize: '14px', margin: '0' }}>Cliente: {project.client}</p>
+          <p style={{ fontSize: '14px', margin: '0' }}>Impresa: {project.contractor}</p>
+        </div>
+        <div style={{ textAlign: 'right' }}>
+           <Building2 style={{ width: '40px', height: '40px', margin: '0 auto 8px auto', color: '#374151' }} />
+          <h2 style={{ fontSize: '18px', fontWeight: '600', margin: '0' }}>Giornale dei Lavori</h2>
+        </div>
+      </div>
 
-        <section className="my-6">
-          <Card className="border-gray-400">
-            <CardHeader>
-              <CardTitle className="text-base">Dati del Giorno - {format(log.date, "eeee d MMMM yyyy", { locale: it })}</CardTitle>
-            </CardHeader>
-            <CardContent>
-               <div className="grid grid-cols-4 gap-4 text-sm">
-                  <div><span className="font-semibold">Stato:</span> {log.weather.state}</div>
-                  <div><span className="font-semibold">Temperatura:</span> {log.weather.temperature}°C</div>
-                  <div className="col-span-2"><span className="font-semibold">Precipitazioni:</span> {log.weather.precipitation}</div>
-               </div>
-            </CardContent>
-          </Card>
-        </section>
+      <div style={{ margin: '24px 0' }}>
+        <div style={{ border: '1px solid #9ca3af', borderRadius: '8px', padding: '16px' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 'bold', margin: '0 0 16px 0' }}>
+            Dati del Giorno - {format(log.date, "eeee d MMMM yyyy", { locale: it })}
+          </h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', fontSize: '14px' }}>
+            <div><strong>Stato:</strong> {log.weather.state}</div>
+            <div><strong>Temperatura:</strong> {log.weather.temperature}°C</div>
+            <div style={{ gridColumn: 'span 2' }}><strong>Precipitazioni:</strong> {log.weather.precipitation}</div>
+          </div>
+        </div>
+      </div>
 
-        <section className="my-6">
-            <h3 className="text-xl font-bold border-b border-gray-400 pb-2 mb-4">Annotazioni della Giornata</h3>
-            <div className="space-y-4">
-              {log.annotations.map(annotation => (
-                <div key={annotation.id} className="p-3 border border-gray-200 rounded-md text-sm break-inside-avoid">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <p className="font-bold">{annotation.author.name} <span className="font-normal text-gray-600">({annotation.author.role})</span></p>
-                      <p className="text-xs text-gray-500">{format(annotation.timestamp, 'd MMMM yyyy, HH:mm', { locale: it })}</p>
-                    </div>
-                    <Badge variant="secondary" className="text-black">{annotation.type}</Badge>
-                  </div>
-                  <p className="whitespace-pre-wrap">{annotation.content}</p>
+      <div style={{ margin: '24px 0' }}>
+        <h3 style={{ fontSize: '20px', fontWeight: 'bold', borderBottom: '1px solid #9ca3af', paddingBottom: '8px', marginBottom: '16px' }}>
+          Annotazioni della Giornata
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {log.annotations.map(annotation => (
+            <div key={annotation.id} style={{ 
+              padding: '12px', 
+              border: '1px solid #e5e7eb', 
+              borderRadius: '6px',
+              pageBreakInside: 'avoid'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
+                <div>
+                  <p style={{ fontWeight: 'bold', margin: '0', fontSize: '14px' }}>
+                    {annotation.author.name} <span style={{ fontWeight: 'normal', color: '#6b7280' }}>({annotation.author.role})</span>
+                  </p>
+                  <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
+                    {format(annotation.timestamp, 'd MMMM yyyy, HH:mm', { locale: it })}
+                  </p>
                 </div>
-              ))}
-              {log.annotations.length === 0 && <p className="text-gray-500">Nessuna annotazione per questa giornata.</p>}
+                <span style={{ 
+                  backgroundColor: '#f3f4f6', 
+                  color: '#1f2937', 
+                  padding: '4px 8px', 
+                  borderRadius: '12px', 
+                  fontSize: '12px',
+                  fontWeight: '500'
+                }}>
+                  {annotation.type}
+                </span>
+              </div>
+              <p style={{ whiteSpace: 'pre-wrap', margin: '0', fontSize: '14px', paddingTop: '8px' }}>{annotation.content}</p>
             </div>
-        </section>
-        
-        <section className="my-6">
-            <h3 className="text-xl font-bold border-b border-gray-400 pb-2 mb-4">Risorse Impiegate</h3>
-            <div className="break-inside-avoid">
-              <ResourcesTable resources={log.resources} onAddResource={() => {}} isDisabled={true} />
-            </div>
-        </section>
+          ))}
+          {log.annotations.length === 0 && (
+            <p style={{ color: '#6b7280', margin: '0', padding: '16px', textAlign: 'center' }}>Nessuna annotazione per questa giornata.</p>
+          )}
+        </div>
+      </div>
 
-        <footer className="pt-10 mt-10 border-t border-gray-300 text-xs text-gray-500 text-center">
-            <p>Cantiere Digitale - Pagina generata il {format(new Date(), "d MMMM yyyy", { locale: it })}</p>
-        </footer>
+      <div style={{ margin: '24px 0' }}>
+        <h3 style={{ fontSize: '20px', fontWeight: 'bold', borderBottom: '1px solid #9ca3af', paddingBottom: '8px', marginBottom: '16px' }}>
+          Risorse Impiegate
+        </h3>
+        <div style={{ pageBreakInside: 'avoid' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'left', backgroundColor: '#f9fafb' }}>Tipo</th>
+                <th style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'left', backgroundColor: '#f9fafb' }}>Descrizione</th>
+                <th style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right', backgroundColor: '#f9fafb' }}>Q.tà</th>
+              </tr>
+            </thead>
+            <tbody>
+              {log.resources.map(resource => (
+                <tr key={resource.id}>
+                  <td style={{ border: '1px solid #e5e7eb', padding: '8px' }}>{resource.type}</td>
+                  <td style={{ border: '1px solid #e5e7eb', padding: '8px' }}>
+                    {resource.description}
+                    {resource.company && <div style={{ fontSize: '11px', color: '#6b7280' }}>{resource.company}</div>}
+                    {resource.notes && <div style={{ fontSize: '11px', color: '#6b7280', fontStyle: 'italic' }}>{resource.notes}</div>}
+                  </td>
+                  <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'right' }}>{resource.quantity}</td>
+                </tr>
+              ))}
+              {log.resources.length === 0 && (
+                 <tr>
+                   <td colSpan={3} style={{ border: '1px solid #e5e7eb', padding: '16px', textAlign: 'center', color: '#6b7280' }}>
+                      Nessuna risorsa registrata.
+                   </td>
+                 </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style={{ 
+        paddingTop: '40px', 
+        marginTop: '40px', 
+        borderTop: '1px solid #d1d5db', 
+        fontSize: '12px', 
+        color: '#6b7280', 
+        textAlign: 'center' 
+      }}>
+        <p style={{ margin: '0' }}>
+          Cantiere Digitale - Pagina generata il {format(new Date(), "d MMMM yyyy", { locale: it })}
+        </p>
+      </div>
     </div>
   );
 });
@@ -169,7 +236,6 @@ export default function ProjectLogPage() {
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
-    // Create a dedicated container for the portal
     const container = document.createElement('div');
     container.style.position = 'fixed';
     container.style.left = '-9999px';
@@ -268,7 +334,6 @@ export default function ProjectLogPage() {
     setIsPreparing(true);
 
     try {
-      // Attendi che il componente sia montato nel DOM del portal
       await new Promise(resolve => setTimeout(resolve, 200));
 
       const contentToPrint = printRef.current;
@@ -388,7 +453,6 @@ export default function ProjectLogPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       
-      {/* Usa il portal solo quando necessario */}
       {isPreparing && portalContainer && createPortal(
         <PrintableLog ref={printRef} project={project} log={dailyLog} />,
         portalContainer
@@ -444,3 +508,5 @@ export default function ProjectLogPage() {
     </div>
   );
 }
+
+    

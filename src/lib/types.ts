@@ -1,3 +1,4 @@
+
 export type UserRole = 'Direttore dei Lavori (DL)' | 'Responsabile del Procedimento (RUP)' | 'Coordinatore per la Sicurezza (CSE)' | 'Impresa Esecutrice' | 'Assistente del DL';
 
 export type Stakeholder = {
@@ -51,6 +52,7 @@ export type Resource = {
   quantity: number;
   notes?: string;
   company?: string;
+  hours?: number;
 };
 
 export type DailyLog = {
@@ -62,3 +64,5 @@ export type DailyLog = {
   isValidated: boolean;
   project?: Project; // Optional, as it's not always present
 };
+
+    
