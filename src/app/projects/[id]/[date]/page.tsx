@@ -329,68 +329,90 @@ export default function ProjectLogPage() {
     }
   }
 
-  const handleExportToPDF = async () => {
-    if (!project || !dailyLog) return;
-    
-    setIsExporting(true);
-    setIsPreparing(true);
+const handleExportToPDF = async () => {
+  if (!project || !dailyLog) return;
+  
+  setIsExporting(true);
+  setIsPreparing(true);
 
-    try {
-      await new Promise(resolve => setTimeout(resolve, 200));
+  try {
+    // Attendi che il componente sia completamente renderizzato
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-      const contentToPrint = printRef.current;
-      if (!contentToPrint) {
-        throw new Error("Impossibile trovare il contenuto da stampare.");
+    const contentToPrint = printRef.current;
+    if (!contentToPrint) {
+      throw new Error("Impossibile trovare il contenuto da stampare.");
+    }
+
+    // Forza un reflow del contenuto
+    contentToPrint.style.display = 'none';
+    contentToPrint.offsetHeight; // Trigger reflow
+    contentToPrint.style.display = 'block';
+
+    const canvas = await html2canvas(contentToPrint, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff',
+      width: contentToPrint.offsetWidth,
+      height: contentToPrint.offsetHeight,
+      onclone: (clonedDoc) => {
+        // Assicurati che tutti gli stili siano applicati
+        const clonedElement = clonedDoc.querySelector('[data-html2canvas-ignore]');
+        if (clonedElement) {
+          clonedElement.style.display = 'block';
+        }
       }
+    });
 
-      const canvas = await html2canvas(contentToPrint, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-      });
+    // Verifica che il canvas abbia contenuto
+    if (canvas.width === 0 || canvas.height === 0) {
+      throw new Error("Il contenuto catturato è vuoto");
+    }
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-      });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
 
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const ratio = canvasWidth / pdfWidth;
-      const imgHeight = canvasHeight / ratio;
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+    
+    // Calcola le dimensioni corrette
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    
+    // Gestione multipagina
+    const imgHeight = (canvasHeight * pdfWidth) / canvasWidth;
+    let heightLeft = imgHeight;
+    let position = 0;
 
-      let heightLeft = imgHeight;
-      let position = 0;
+    pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+    heightLeft -= pdfHeight;
 
+    while (heightLeft > 0) {
+      position -= pdfHeight;
+      pdf.addPage();
       pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
       heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-          position -= pdfHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-          heightLeft -= pdfHeight;
-      }
-
-      pdf.save(`GiornaleLavori_${project.name}_${dateString}.pdf`);
-
-    } catch (error) {
-        console.error("Failed to export PDF:", error);
-        toast({
-            variant: 'destructive',
-            title: "Errore di Esportazione",
-            description: (error as Error).message || "Impossibile generare il PDF.",
-        });
-    } finally {
-      setIsExporting(false);
-      setIsPreparing(false);
     }
-  };
+
+    pdf.save(`GiornaleLavori_${project.name}_${dateString}.pdf`);
+
+  } catch (error) {
+    console.error("Failed to export PDF:", error);
+    toast({
+      variant: 'destructive',
+      title: "Errore di Esportazione",
+      description: (error as Error).message || "Impossibile generare il PDF.",
+    });
+  } finally {
+    setIsExporting(false);
+    setIsPreparing(false);
+  }
+};
 
 
   const addAnnotation = useCallback((annotationData: Omit<Annotation, 'id' | 'timestamp' | 'author' | 'isSigned' | 'attachments'>) => {
@@ -479,6 +501,14 @@ export default function ProjectLogPage() {
           <div className="lg:col-span-3 space-y-6 mt-8 lg:mt-0">
              <DailyLogHeader logDate={dailyLog.date} weather={dailyLog.weather} isDisabled={false} onWeatherChange={(newWeather) => setDailyLog(prev => prev ? {...prev, weather: newWeather} : null)} />
               
+            <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
+            
+            <NewAnnotationForm 
+              onAddAnnotation={addAnnotation} 
+              isDisabled={false}
+              projectDescription={project.description}
+            />
+
               <div className="space-y-4">
                 <h2 className="font-headline text-2xl font-bold">Timeline del Giorno</h2>
                 {dailyLog.annotations.map(annotation => (
@@ -490,14 +520,6 @@ export default function ProjectLogPage() {
                     </div>
                 )}
               </div>
-
-            <NewAnnotationForm 
-              onAddAnnotation={addAnnotation} 
-              isDisabled={false}
-              projectDescription={project.description}
-            />
-
-            <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
 
              <div className="block lg:hidden pt-4">
                 <ActionsCard {...actionHandlers} />

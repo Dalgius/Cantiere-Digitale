@@ -67,18 +67,3 @@
     @apply bg-background text-foreground;
   }
 }
-
-/* Temporary debug styles */
-body * {
-  outline: 1px solid rgba(255, 0, 0, 0.3) !important;
-}
-
-html, body {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-main {
-  margin: 0 !important;
-  padding: 0 !important;
-}
