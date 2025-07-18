@@ -18,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { auth } from '@/lib/firebase';
 import { updateProfile } from 'firebase/auth';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useRouter } from 'next/navigation';
 
 const profileSchema = z.object({
   title: z.string().optional(),
@@ -30,6 +31,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export default function ProfilePage() {
   const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -88,8 +90,7 @@ export default function ProfilePage() {
 
 
   const onSubmit: SubmitHandler<ProfileFormValues> = async (data) => {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
+    if (!user) {
        toast({
         variant: 'destructive',
         title: 'Errore',
@@ -101,28 +102,18 @@ export default function ProfilePage() {
     try {
       const fullDisplayName = data.title ? `${data.title} ${data.displayName}` : data.displayName;
       
-      await updateProfile(currentUser, { 
+      await updateProfile(user, { 
           displayName: fullDisplayName,
           // photoURL: In a real app, you would get this URL from your file upload service, e.g., avatarPreview
       });
-      
-      // Update the user object in the auth context to reflect changes immediately
-      // This is a client-side update for immediate feedback
-      if(auth.currentUser) {
-        auth.currentUser.displayName = fullDisplayName;
-        // auth.currentUser.photoURL = avatarPreview;
-      }
       
       toast({
         title: 'Profilo Aggiornato',
         description: 'Le tue informazioni sono state salvate con successo.',
       });
 
-      // Reset form with new values to ensure consistency
-      reset({
-        ...data,
-        title: data.title || '',
-      })
+      // Force a refresh of the page to make sure all components get the new user data
+      router.refresh();
 
     } catch (error) {
       console.error('Failed to update profile:', error);

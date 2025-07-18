@@ -41,14 +41,24 @@ export function AnnotationCard({ annotation, isLogValidated }: AnnotationCardPro
     // In a real app, this would trigger a server action and digital signature flow.
     setIsSigned(true);
   };
+  
+  const getAvatarFallback = (name: string) => {
+    if (!name) return 'U';
+    const parts = name.split(' ');
+    if (parts.length > 1) {
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  }
+
 
   return (
     <Card className={`transition-all ${isLogValidated ? 'bg-secondary/30' : 'bg-card'}`}>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <Avatar>
-            <AvatarImage src={`https://placehold.co/40x40.png?text=${annotation.author.name.charAt(0)}`} data-ai-hint="person face" />
-            <AvatarFallback>{annotation.author.name.substring(0, 2)}</AvatarFallback>
+            <AvatarImage src={undefined} data-ai-hint="person face" />
+            <AvatarFallback>{getAvatarFallback(annotation.author.name)}</AvatarFallback>
           </Avatar>
           <div>
             <CardTitle className="text-base">{annotation.author.name}</CardTitle>

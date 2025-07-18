@@ -1,3 +1,4 @@
+
 // src/app/projects/[id]/[date]/page.tsx
 'use client';
 
@@ -11,12 +12,12 @@ import { FileText, Download, Save } from "lucide-react";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useCallback } from "react";
-import type { DailyLog, Project, Annotation, Resource } from "@/lib/types";
+import type { DailyLog, Project, Annotation, Resource, Stakeholder } from "@/lib/types";
 import { getDailyLog, getProject, getDailyLogsForProject, saveDailyLog } from "@/lib/data-service";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DailyLogNav } from "@/components/log/daily-log-nav";
-import { stakeholders } from "@/lib/data";
 import { Header } from "@/components/layout/header";
+import { useAuth } from "@/hooks/use-auth";
 
 function PageLoader() {
   return (
@@ -51,6 +52,7 @@ function PageLoader() {
 export default function ProjectLogPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const { toast } = useToast();
   const { id: projectId, date: dateString } = params as { id: string, date: string };
 
@@ -130,13 +132,25 @@ export default function ProjectLogPage() {
   }
 
   const addAnnotation = useCallback((annotationData: Omit<Annotation, 'id' | 'timestamp' | 'author' | 'isSigned' | 'attachments'>) => {
+    if (!user) {
+        toast({ variant: 'destructive', title: "Errore", description: "Devi essere loggato per aggiungere una nota." });
+        return;
+    }
+    
     setDailyLog(prevLog => {
       if (!prevLog) return null;
+
+      const currentUserAsStakeholder: Stakeholder = {
+        id: user.uid,
+        name: user.displayName || 'Utente Anonimo',
+        role: 'Direttore dei Lavori (DL)' // You might want to make this dynamic in the future
+      };
+
       const newAnnotation: Annotation = {
         ...annotationData,
         id: `anno-local-${Date.now()}`,
         timestamp: new Date(),
-        author: stakeholders.dl, 
+        author: currentUserAsStakeholder, 
         attachments: [],
         isSigned: false, 
       };
@@ -147,7 +161,7 @@ export default function ProjectLogPage() {
       };
       return updatedLog;
     });
-  }, []);
+  }, [user, toast]);
 
   const addResource = useCallback((resourceData: Omit<Resource, 'id'>) => {
     setDailyLog(prevLog => {

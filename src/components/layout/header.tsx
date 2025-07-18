@@ -1,3 +1,4 @@
+
 // src/components/layout/header.tsx
 'use client';
 
@@ -31,6 +32,17 @@ export function Header() {
     return null;
   }
   
+  const getAvatarFallback = () => {
+    if (user.displayName) {
+       const parts = user.displayName.split(' ');
+       if (parts.length > 1) {
+        return (parts[0][0] + parts[parts.length -1][0]).toUpperCase();
+       }
+       return user.displayName.substring(0, 2).toUpperCase();
+    }
+    return user.email?.substring(0, 2).toUpperCase() || 'U';
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur-sm">
       <div className="container flex h-16 items-center">
@@ -43,8 +55,8 @@ export function Header() {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                 <Avatar>
-                  <AvatarImage src={`https://placehold.co/40x40.png`} alt={user.email || 'User'} data-ai-hint="man portrait" />
-                  <AvatarFallback>{user.email?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>
+                  <AvatarImage src={user.photoURL || undefined} alt={user.displayName || 'User'} data-ai-hint="man portrait" />
+                  <AvatarFallback>{getAvatarFallback()}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
