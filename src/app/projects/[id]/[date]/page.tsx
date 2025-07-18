@@ -23,6 +23,7 @@ import html2canvas from 'html2canvas';
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { createPortal } from "react-dom";
 
 function PageLoader() {
   return (
@@ -228,11 +229,11 @@ export default function ProjectLogPage() {
   }
 
   const handleExportToPDF = async () => {
-    setShouldRenderPrintable(true);
     setIsExporting(true);
+    setShouldRenderPrintable(true); // Abilita il rendering
 
     try {
-      // Attendi che il componente sia renderizzato
+      // Attendi che il componente sia renderizzato nel portale
       await new Promise(resolve => setTimeout(resolve, 100));
       
       const contentToPrint = printRef.current;
@@ -352,11 +353,11 @@ export default function ProjectLogPage() {
     <div className="flex min-h-screen flex-col">
       <Header />
       
-       {/* Renderizza solo quando necessario */}
-      {shouldRenderPrintable && (
+       {shouldRenderPrintable && typeof window !== 'undefined' && createPortal(
         <div className="absolute -left-[9999px] -top-[9999px]">
           <PrintableLog ref={printRef} project={project} log={dailyLog} />
-        </div>
+        </div>,
+        document.body
       )}
 
       <main className="container mx-auto p-4 md:p-8 flex-1">
@@ -411,4 +412,3 @@ export default function ProjectLogPage() {
     </div>
   );
 }
-
