@@ -51,6 +51,26 @@ function PageLoader() {
   )
 }
 
+function ActionsCard({ onSave, onExport, isSaving, isExporting }: { onSave: () => void, onExport: () => void, isSaving: boolean, isExporting: boolean }) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline text-lg">Azioni e Strumenti</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+                <Button onClick={onSave} className="w-full" disabled={isSaving || isExporting}>
+                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {isSaving ? 'Salvataggio...' : 'Salva Dati Giornata'}
+                </Button>
+                <Button variant="outline" className="w-full" onClick={onExport} disabled={isSaving || isExporting}>
+                    {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                    {isExporting ? 'Esportazione...' : 'Esporta PDF'}
+                </Button>
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function ProjectLogPage() {
   const params = useParams();
   const router = useRouter();
@@ -104,7 +124,7 @@ export default function ProjectLogPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast, notFound]);
+  }, [toast]);
 
 
   useEffect(() => {
@@ -152,28 +172,22 @@ export default function ProjectLogPage() {
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
-      const ratio = canvasWidth / canvasHeight;
-      let imgHeight = pdfWidth / ratio;
       
-      let pages = Math.ceil(canvasHeight / (canvas.width * (pdfHeight / pdfWidth)));
-      let pageHeight = canvas.height / pages;
-      
+      let heightLeft = canvasHeight;
       let position = 0;
-      for (let i = 0; i < pages; i++) {
-        const pageCanvas = await html2canvas(printRef.current, {
-          scale: 2,
-          y: pageHeight * i,
-          height: pageHeight,
-          windowHeight: pageHeight
-        });
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvasHeight * imgWidth) / canvasWidth;
 
-        const imgData = pageCanvas.toDataURL('image/png');
-        if (i > 0) {
-          pdf.addPage();
-        }
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - canvasHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pdfHeight;
       }
-
+      
       pdf.save(`GiornaleLavori_${project?.name}_${dateString}.pdf`);
 
     } catch (error) {
@@ -240,6 +254,13 @@ export default function ProjectLogPage() {
     return <PageLoader />;
   }
   
+  const actionHandlers = {
+    onSave: handleSave,
+    onExport: handleExportToPDF,
+    isSaving,
+    isExporting,
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <Header />
@@ -254,21 +275,9 @@ export default function ProjectLogPage() {
               </CardHeader>
              </Card>
             <DailyLogNav projectLogs={projectLogs} projectId={project.id} activeDate={dailyLog.date} />
-             <Card>
-              <CardHeader>
-                  <CardTitle className="font-headline text-lg">Azioni e Strumenti</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                  <Button onClick={handleSave} className="w-full" disabled={isSaving || isExporting}>
-                    {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                    {isSaving ? 'Salvataggio...' : 'Salva Dati Giornata'}
-                  </Button>
-                  <Button variant="outline" className="w-full" onClick={handleExportToPDF} disabled={isSaving || isExporting}>
-                      {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                      {isExporting ? 'Esportazione...' : 'Esporta PDF'}
-                  </Button>
-              </CardContent>
-            </Card>
+             <div className="hidden lg:block">
+                <ActionsCard {...actionHandlers} />
+             </div>
           </aside>
 
           <div className="lg:col-span-3 space-y-6 mt-8 lg:mt-0">
@@ -298,6 +307,10 @@ export default function ProjectLogPage() {
                <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
             </div>
 
+             <div className="block lg:hidden pt-4">
+                <ActionsCard {...actionHandlers} />
+             </div>
+
           </div>
 
         </div>
@@ -305,3 +318,5 @@ export default function ProjectLogPage() {
     </div>
   );
 }
+
+    
