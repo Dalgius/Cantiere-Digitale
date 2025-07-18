@@ -57,7 +57,7 @@ export default function NewProjectPage() {
         return;
       }
 
-      const newProjectData: Omit<Project, 'id' | 'stakeholders' | 'ownerId'> = {
+      const newProjectData: Omit<Project, 'id' | 'stakeholders' | 'ownerId' | 'lastLogDate'> = {
         name: formData.name,
         client: formData.client,
         contractor: formData.contractor,

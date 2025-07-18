@@ -14,6 +14,7 @@ export type Project = {
   contractor: string;
   stakeholders: Stakeholder[];
   ownerId: string; // The UID of the user who created the project
+  lastLogDate?: Date; // The date of the most recent log entry
 };
 
 export type Weather = {

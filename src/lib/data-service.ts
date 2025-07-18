@@ -3,15 +3,19 @@
 
 import { db, Timestamp } from '@/lib/firebase';
 import type { DailyLog, Project } from '@/lib/types';
-import { collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, query, where, orderBy, limit } from 'firebase/firestore';
 import { stakeholders } from './data';
 
 // Helper function to convert Firestore snapshots to Project objects
 function snapshotToProject(doc: any): Project {
     const data = doc.data();
     // Explicitly exclude stakeholders to keep the dashboard payload light for list view
-    const { stakeholders, ...rest } = data;
-    return { id: doc.id, ...rest } as Project;
+    const { stakeholders, lastLogDate, ...rest } = data;
+    const project: Project = { id: doc.id, ...rest };
+    if (lastLogDate instanceof Timestamp) {
+        project.lastLogDate = lastLogDate.toDate();
+    }
+    return project;
 }
 
 // Retrieves all projects, can be used for admin purposes or if no user filter is needed.
@@ -43,7 +47,11 @@ export async function getProject(id: string): Promise<Project | null> {
         }
         
         const data = projectSnap.data();
-        return { id: projectSnap.id, ...data } as Project;
+        const project: Project = { id: projectSnap.id, ...data } as Project;
+         if (data.lastLogDate instanceof Timestamp) {
+            project.lastLogDate = data.lastLogDate.toDate();
+        }
+        return project;
     } catch (error) {
         console.error(`Error fetching project ${id}:`, error);
         return null;
@@ -61,7 +69,24 @@ export async function getProjectsByOwner(ownerId: string): Promise<Project[]> {
             return [];
         }
         
-        const projectList = projectSnapshot.docs.map(snapshotToProject);
+        const projectList = await Promise.all(projectSnapshot.docs.map(async (projectDoc) => {
+            const project = snapshotToProject(projectDoc);
+            
+            // Get the most recent daily log to find the last log date
+            const logsCol = collection(db, `projects/${project.id}/dailyLogs`);
+            const logsQuery = query(logsCol, orderBy("date", "desc"), limit(1));
+            const logSnapshot = await getDocs(logsQuery);
+            
+            if (!logSnapshot.empty) {
+                const lastLog = logSnapshot.docs[0].data();
+                if (lastLog.date instanceof Timestamp) {
+                   project.lastLogDate = lastLog.date.toDate();
+                }
+            }
+            
+            return project;
+        }));
+
         return projectList;
     } catch (error) {
         console.error(`Error fetching projects for owner ${ownerId}:`, error);
@@ -140,12 +165,16 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
         timestamp: anno.timestamp ? Timestamp.fromDate(new Date(anno.timestamp)) : Timestamp.now(),
       })),
     };
-    
+
     await setDoc(logRef, logToSave, { merge: true });
+
+    // Also update the lastLogDate on the project document
+    const projectRef = doc(db, 'projects', projectId);
+    await setDoc(projectRef, { lastLogDate: logToSave.date }, { merge: true });
 }
 
 
-export async function addProject(projectData: Omit<Project, 'id' | 'stakeholders' | 'ownerId'>, ownerId: string): Promise<Project> {
+export async function addProject(projectData: Omit<Project, 'id' | 'stakeholders' | 'ownerId' | 'lastLogDate'>, ownerId: string): Promise<Project> {
     const projectsCol = collection(db, 'projects');
     
     const projectToAdd = {

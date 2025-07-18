@@ -2,7 +2,7 @@
 'use client';
 
 import Link from "next/link";
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   Card, 
@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { deleteProject } from "@/lib/data-service";
 import { useToast } from "@/hooks/use-toast";
+import { differenceInDays, startOfDay } from 'date-fns';
 
 interface ProjectCardProps {
   project: Project;
@@ -40,8 +41,14 @@ export function ProjectCard({ project }: ProjectCardProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
 
-  // Mock notification logic
-  const notificationType = project.id === 'proj-1' ? 'warning' : 'info';
+  const daysSinceLastLog = useMemo(() => {
+    if (!project.lastLogDate) {
+      return null;
+    }
+    const today = startOfDay(new Date());
+    const lastLog = startOfDay(new Date(project.lastLogDate));
+    return differenceInDays(today, lastLog);
+  }, [project.lastLogDate]);
   
   // The redirect logic is now handled by /projects/[id]/page.tsx
   const href = `/projects/${project.id}`;
@@ -110,18 +117,19 @@ export function ProjectCard({ project }: ProjectCardProps) {
               <p className="text-sm text-muted-foreground line-clamp-3">{project.description}</p>
             </CardContent>
             <CardFooter className="flex justify-between items-center pt-4">
-              {notificationType === 'warning' && (
-                <Badge variant="destructive" className="text-xs">
-                  <AlertTriangle className="mr-1 h-3 w-3" />
-                  Contestazione
-                </Badge>
-              )}
-              {notificationType === 'info' && (
-                <Badge variant="secondary" className="text-xs">
-                  <Bell className="mr-1 h-3 w-3" />
-                  3 giorni senza logs
-                </Badge>
-              )}
+              <div>
+                {daysSinceLastLog !== null && daysSinceLastLog > 2 && (
+                    <Badge variant="secondary" className="text-xs">
+                      <Bell className="mr-1 h-3 w-3" />
+                      {daysSinceLastLog} giorni senza log
+                    </Badge>
+                )}
+                 {/* Placeholder for future warning notifications */}
+                 {/* <Badge variant="destructive" className="text-xs">
+                   <AlertTriangle className="mr-1 h-3 w-3" />
+                   Contestazione
+                 </Badge> */}
+              </div>
               <div className="flex items-center text-sm text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                 <span>Vai al progetto</span>
                 <ChevronRight className="h-4 w-4 ml-1" />
