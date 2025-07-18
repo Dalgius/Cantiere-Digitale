@@ -681,14 +681,6 @@ const handleExportToPDF = async () => {
           <div className="lg:col-span-3 space-y-6 mt-8 lg:mt-0">
              <DailyLogHeader logDate={dailyLog.date} weather={dailyLog.weather} isDisabled={false} onWeatherChange={(newWeather) => setDailyLog(prev => prev ? {...prev, weather: newWeather} : null)} />
               
-            <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
-            
-            <NewAnnotationForm 
-              onAddAnnotation={addAnnotation} 
-              isDisabled={false}
-              projectDescription={project.description}
-            />
-
               <div className="space-y-4">
                 <h2 className="font-headline text-2xl font-bold">Timeline del Giorno</h2>
                 {dailyLog.annotations.map(annotation => (
@@ -700,6 +692,14 @@ const handleExportToPDF = async () => {
                     </div>
                 )}
               </div>
+
+            <NewAnnotationForm 
+              onAddAnnotation={addAnnotation} 
+              isDisabled={false}
+              projectDescription={project.description}
+            />
+
+            <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
 
              <div className="block lg:hidden pt-4">
                 <ActionsCard {...actionHandlers} />
@@ -714,3 +714,5 @@ const handleExportToPDF = async () => {
 }
 
     
+
+  
