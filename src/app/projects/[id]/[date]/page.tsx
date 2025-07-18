@@ -627,12 +627,13 @@ const handleExportToPDF = async () => {
         };
       });
 
+      // Wait for all uploads to complete
       newAttachments = await Promise.all(uploadPromises);
 
     } catch (uploadError) {
       console.error("Error during file upload:", uploadError);
-      toast({ variant: 'destructive', title: "Errore di Upload", description: "Impossibile caricare gli allegati." });
-      return;
+      toast({ variant: 'destructive', title: "Errore di Upload", description: "Impossibile caricare gli allegati. Controlla la configurazione di Firebase Storage (CORS e Regole)." });
+      return; // Stop execution if upload fails
     }
     
     const currentUserAsStakeholder: Stakeholder = {
@@ -648,7 +649,7 @@ const handleExportToPDF = async () => {
         isSigned: false, 
         type: annotationData.type,
         content: annotationData.content,
-        attachments: newAttachments,
+        attachments: newAttachments, // Now contains URLs from Firebase Storage
     };
 
     setDailyLog(currentLog => {
@@ -777,3 +778,5 @@ const handleExportToPDF = async () => {
     </div>
   );
 }
+
+    
