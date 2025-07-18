@@ -67,3 +67,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Temporary debug outline */
+* {
+  outline: 1px solid red !important;
+}
