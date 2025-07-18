@@ -165,7 +165,7 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
 
       {/* Annotazioni con titolo forzatamente centrato */}
       <div style={{ marginBottom: '30px' }}>
-        <h3 style={{ 
+        <h3 style={{
           fontSize: '22px', 
           fontWeight: 'bold', 
           borderBottom: '2px solid #9ca3af', 
@@ -497,53 +497,27 @@ const handleExportToPDF = async () => {
 
   try {
     // Attendi che il componente sia completamente renderizzato
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const contentToPrint = printRef.current;
     if (!contentToPrint) {
       throw new Error("Impossibile trovare il contenuto da stampare.");
     }
 
-    // Forza un reflow del contenuto
-    contentToPrint.style.display = 'none';
-    contentToPrint.offsetHeight; // Trigger reflow
-    contentToPrint.style.display = 'block';
-
     const canvas = await html2canvas(contentToPrint, {
-      scale: 1.5, // Ridotto per evitare problemi di memoria
+      scale: 1.2, // Scala ridotta per un buon compromesso qualità/dimensione
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
-      width: contentToPrint.scrollWidth,
-      height: contentToPrint.scrollHeight,
-      windowWidth: 1200,
-      windowHeight: 1600,
-      x: 0,
-      y: 0,
-      onclone: (clonedDoc) => {
-        // Sostituisci tutte le icone SVG con testo
-        const svgElements = clonedDoc.querySelectorAll('svg');
-        svgElements.forEach(svg => {
-          const replacement = clonedDoc.createElement('div');
-          replacement.innerHTML = '🏗️';
-          replacement.style.fontSize = '24px';
-          replacement.style.textAlign = 'center';
-          replacement.style.width = '40px';
-          replacement.style.height = '40px';
-          replacement.style.display = 'flex';
-          replacement.style.alignItems = 'center';
-          replacement.style.justifyContent = 'center';
-          svg.parentNode?.replaceChild(replacement, svg);
-        });
-      }
     });
 
     // Verifica che il canvas abbia contenuto
     if (canvas.width === 0 || canvas.height === 0) {
-      throw new Error("Il contenuto catturato è vuoto");
+      throw new Error("Il contenuto catturato è vuoto.");
     }
-
-    const imgData = canvas.toDataURL('image/png', 0.8);
+    
+    // Usa JPEG per una compressione migliore e una dimensione file inferiore
+    const imgData = canvas.toDataURL('image/jpeg', 0.8);
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
@@ -552,32 +526,23 @@ const handleExportToPDF = async () => {
 
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
-    const margin = 10; // Margine di 10mm
-    const availableWidth = pdfWidth - (margin * 2);
-    const availableHeight = pdfHeight - (margin * 2);
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+    const ratio = imgWidth / imgHeight;
+
+    let finalImgWidth = pdfWidth;
+    let finalImgHeight = pdfWidth / ratio;
     
-    // Calcola le dimensioni corrette mantenendo le proporzioni
-    const canvasWidth = canvas.width;
-    const canvasHeight = canvas.height;
-    const aspectRatio = canvasWidth / canvasHeight;
-    
-    let imgWidth = availableWidth;
-    let imgHeight = availableWidth / aspectRatio;
-    
-    // Se l'altezza supera la pagina, ridimensiona basandoti sull'altezza
-    if (imgHeight > availableHeight) {
-      imgHeight = availableHeight;
-      imgWidth = availableHeight * aspectRatio;
+    if (finalImgHeight > pdfHeight) {
+      finalImgHeight = pdfHeight;
+      finalImgWidth = pdfHeight * ratio;
     }
 
-    // Centra l'immagine
-    const xOffset = (pdfWidth - imgWidth) / 2;
-    const yOffset = margin;
+    const xOffset = (pdfWidth - finalImgWidth) / 2;
+    const yOffset = (pdfHeight - finalImgHeight) / 2;
 
-    // Aggiungi l'immagine una sola volta, centrata
-    pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgWidth, imgHeight);
+    pdf.addImage(imgData, 'JPEG', xOffset, yOffset, finalImgWidth, finalImgHeight);
 
-    // Salva il PDF
     pdf.save(`GiornaleLavori_${project.name}_${dateString}.pdf`);
 
   } catch (error) {
@@ -620,7 +585,7 @@ const handleExportToPDF = async () => {
       
       const updatedLog = {
         ...prevLog,
-        annotations: [...prevLog.annotations, newAnnotation],
+        annotations: [newAnnotation, ...prevLog.annotations],
       };
       return updatedLog;
     });
@@ -636,6 +601,26 @@ const handleExportToPDF = async () => {
       return {
         ...prevLog,
         resources: [...prevLog.resources, newResource],
+      };
+    });
+  }, []);
+
+  const removeAnnotation = useCallback((annotationId: string) => {
+    setDailyLog(prevLog => {
+      if (!prevLog) return null;
+      return {
+        ...prevLog,
+        annotations: prevLog.annotations.filter(a => a.id !== annotationId),
+      };
+    });
+  }, []);
+
+  const removeResource = useCallback((resourceId: string) => {
+    setDailyLog(prevLog => {
+      if (!prevLog) return null;
+      return {
+        ...prevLog,
+        resources: prevLog.resources.filter(r => r.id !== resourceId),
       };
     });
   }, []);
@@ -683,7 +668,12 @@ const handleExportToPDF = async () => {
               <div className="space-y-4">
                 <h2 className="font-headline text-2xl font-bold">Timeline del Giorno</h2>
                 {dailyLog.annotations.map(annotation => (
-                  <AnnotationCard key={annotation.id} annotation={annotation} isLogValidated={dailyLog.isValidated}/>
+                  <AnnotationCard 
+                    key={annotation.id} 
+                    annotation={annotation} 
+                    isLogValidated={dailyLog.isValidated}
+                    onDelete={removeAnnotation}
+                    />
                 ))}
                 {dailyLog.annotations.length === 0 && (
                     <div className="text-center py-12 border-2 border-dashed rounded-lg">
@@ -698,7 +688,12 @@ const handleExportToPDF = async () => {
               projectDescription={project.description}
             />
 
-            <ResourcesTable resources={dailyLog.resources} onAddResource={addResource} isDisabled={false} />
+            <ResourcesTable 
+                resources={dailyLog.resources} 
+                onAddResource={addResource} 
+                onRemoveResource={removeResource}
+                isDisabled={false} 
+            />
 
              <div className="block lg:hidden pt-4">
                 <ActionsCard {...actionHandlers} />
@@ -711,11 +706,3 @@ const handleExportToPDF = async () => {
     </div>
   );
 }
-
-
-
-    
-
-  
-
-    
