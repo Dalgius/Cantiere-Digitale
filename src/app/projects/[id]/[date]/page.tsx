@@ -15,6 +15,7 @@ import { useEffect, useState, useCallback, useRef, forwardRef } from "react";
 import { createPortal } from 'react-dom';
 import type { DailyLog, Project, Annotation, Resource, Stakeholder, Attachment } from "@/lib/types";
 import { getDailyLog, getProject, getDailyLogsForProject, saveDailyLog } from "@/lib/data-service";
+import { deleteFileFromStorage } from "@/lib/storage-service";
 import { storage } from "@/lib/firebase";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -677,14 +678,41 @@ const handleExportToPDF = async () => {
     });
   }, []);
 
-  const removeAnnotation = useCallback((annotationId: string) => {
+  const removeAnnotation = useCallback(async (annotationId: string) => {
+    let annotationToRemove: Annotation | undefined;
+    
+    // First, update the state to remove the annotation from the UI instantly.
     setDailyLog(prevLog => {
       if (!prevLog) return null;
+      annotationToRemove = prevLog.annotations.find(a => a.id === annotationId);
       return {
         ...prevLog,
         annotations: prevLog.annotations.filter(a => a.id !== annotationId),
       };
     });
+
+    // Then, if the annotation and its attachments exist, delete them from Storage.
+    if (annotationToRemove?.attachments) {
+      toast({
+        title: "Eliminazione in corso...",
+        description: "Rimozione dei file allegati.",
+      });
+      const deletePromises = annotationToRemove.attachments.map(att => deleteFileFromStorage(att.url));
+      try {
+        await Promise.all(deletePromises);
+        toast({
+          title: "File Eliminati",
+          description: "Gli allegati sono stati rimossi con successo.",
+        });
+      } catch (error) {
+        console.error("Failed to delete one or more attachments:", error);
+        toast({
+          variant: 'destructive',
+          title: 'Errore',
+          description: 'Impossibile eliminare tutti gli allegati.',
+        });
+      }
+    }
   }, []);
 
   const removeResource = useCallback((resourceId: string) => {
