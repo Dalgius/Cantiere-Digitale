@@ -1,3 +1,4 @@
+
 // src/lib/firebase.ts
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
@@ -14,21 +15,13 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
+let db: Firestore | undefined;
 
 // Check that all environment variables are present before initializing
 if (Object.values(firebaseConfig).some(value => !value)) {
-  console.error("Firebase initialization skipped. One or more environment variables are missing. Please check your .env.local file.");
-  // Assign null to exports to prevent runtime errors on the server if they are accessed.
-  // The application will show a clear state of being uninitialized on the client.
-  // @ts-ignore
-  app = null;
-  // @ts-ignore
-  auth = null;
-  // @ts-ignore
-  db = null;
+  console.error("Firebase initialization skipped. One or more environment variables are missing. Please check your .env.local file and Vercel/production environment variables.");
 } else {
   console.log('[Firebase] Initializing with config:', {
     apiKey: firebaseConfig.apiKey ? '***' : undefined,
@@ -40,11 +33,13 @@ if (Object.values(firebaseConfig).some(value => !value)) {
   auth = getAuth(app);
   db = getFirestore(app);
 
-  // Set auth persistence to local storage
-  setPersistence(auth, browserLocalPersistence)
-    .catch((error) => {
-        console.error("Firebase Auth persistence error:", error);
-    });
+  // Set auth persistence to local storage if running in a browser environment
+  if (typeof window !== "undefined") {
+    setPersistence(auth, browserLocalPersistence)
+      .catch((error) => {
+          console.error("Firebase Auth persistence error:", error);
+      });
+  }
 
   console.log('[Firebase] Initialization successful.');
 }

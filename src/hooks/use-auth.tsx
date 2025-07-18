@@ -30,6 +30,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
+    // Prevent crash if Firebase isn't configured in the environment
+    if (!auth) {
+      setLoading(false);
+      console.error("Auth service is not available. Firebase may not be configured correctly.");
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -39,9 +46,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (loading) return;
+
+    // If Firebase isn't configured, don't attempt to redirect.
+    // The page will likely show an error or empty state, which is appropriate.
+    if (!auth) return;
+
     const isPublic = publicRoutes.includes(pathname);
 
-    // IMPORTANTE: Evita redirect loop se sei già sulla pagina giusta
+    // IMPORTANT: Evita redirect loop se sei già sulla pagina giusta
     if (!user && !isPublic && pathname !== '/login') {
       router.replace('/login');
     }
@@ -49,6 +61,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       router.replace('/');
     }
   }, [user, loading, pathname, router]);
+
+  // If Firebase isn't configured, show children to reveal any potential underlying errors,
+  // but protect routes that require auth.
+  if (!auth) {
+    const isPublic = publicRoutes.includes(pathname);
+    if (!isPublic) {
+        return (
+            <div className="flex min-h-screen flex-col items-center justify-center gap-4 text-center">
+                <h1 className="text-2xl font-bold text-destructive">Errore di Configurazione</h1>
+                <p className="max-w-md text-muted-foreground">
+                    Impossibile connettersi a Firebase. Controlla che le variabili d'ambiente siano impostate correttamente nel tuo ambiente di produzione.
+                </p>
+            </div>
+        )
+    }
+    return <>{children}</>
+  }
 
   const isPublic = publicRoutes.includes(pathname);
   if (loading || (!user && !isPublic) || (user && isPublic)) {
