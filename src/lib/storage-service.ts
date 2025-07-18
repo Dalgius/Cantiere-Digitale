@@ -10,27 +10,31 @@ import { ref, deleteObject } from 'firebase/storage';
  */
 export async function deleteFileFromStorage(fileUrl: string): Promise<void> {
   if (!storage) {
-    console.error("Firebase Storage is not initialized.");
+    throw new Error("Firebase Storage is not initialized.");
+  }
+  
+  if (!fileUrl.startsWith('https://firebasestorage.googleapis.com')) {
+    console.warn(`URL non valido per Firebase Storage, impossibile eliminare: ${fileUrl}`);
     return;
   }
 
   try {
-    // Create a reference from the download URL
+    // La funzione ref() può accettare l'URL HTTPS completo per creare un riferimento
     const fileRef = ref(storage, fileUrl);
     
-    // Delete the file
+    // Ora elimina il file usando questo riferimento
     await deleteObject(fileRef);
-    console.log(`File deleted successfully: ${fileUrl}`);
+    console.log(`File eliminato con successo: ${fileUrl}`);
 
   } catch (error: any) {
-    // Firebase returns 'storage/object-not-found' if the file doesn't exist.
-    // We can safely ignore this error, as the goal is to ensure the file is gone.
+    // Firebase restituisce 'storage/object-not-found' se il file non esiste già.
+    // Possiamo ignorare questo errore, dato che l'obiettivo è che il file non ci sia.
     if (error.code === 'storage/object-not-found') {
-      console.warn(`File not found in Storage (already deleted?): ${fileUrl}`);
+      console.warn(`File non trovato in Storage (forse già eliminato?): ${fileUrl}`);
     } else {
-      console.error(`Error deleting file from Storage: ${fileUrl}`, error);
-      // We don't re-throw because failing to delete a file shouldn't block the UI update.
-      // The orphan will be handled by a cleanup job later.
+      console.error(`Errore durante l'eliminazione del file da Storage: ${fileUrl}`, error);
+      // Lanciamo di nuovo l'errore per renderlo visibile nei log del client
+      throw new Error(`Impossibile eliminare il file: ${error.message}`);
     }
   }
 }
