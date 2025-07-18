@@ -66,13 +66,13 @@ export default function ProjectLogPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (currentProjectId: string, currentDateString: string) => {
     setIsLoading(true);
     try {
       const [fetchedProject, fetchedLog, fetchedLogs] = await Promise.all([
-        getProject(projectId),
-        getDailyLog(projectId, dateString),
-        getDailyLogsForProject(projectId)
+        getProject(currentProjectId),
+        getDailyLog(currentProjectId, currentDateString),
+        getDailyLogsForProject(currentProjectId)
       ]);
       
       if (!fetchedProject) {
@@ -86,11 +86,11 @@ export default function ProjectLogPage() {
       if (fetchedLog) {
         setDailyLog(fetchedLog);
       } else {
-        const [year, month, day] = dateString.split('-');
+        const [year, month, day] = currentDateString.split('-');
         const logDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day), 12, 0, 0, 0));
         
         setDailyLog({
-          id: dateString,
+          id: currentDateString,
           date: logDate,
           weather: { state: 'Sole', temperature: 20, precipitation: 'Assenti' },
           annotations: [],
@@ -104,12 +104,12 @@ export default function ProjectLogPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [projectId, dateString, toast]);
+  }, [toast]);
 
 
   useEffect(() => {
     if (projectId && dateString) {
-      fetchData();
+      fetchData(projectId, dateString);
     }
   }, [projectId, dateString, fetchData]);
   
@@ -123,7 +123,7 @@ export default function ProjectLogPage() {
         title: "Dati Salvati",
         description: "Le informazioni della giornata sono state salvate con successo.",
       });
-      fetchData(); 
+      fetchData(projectId, dateString);
     } catch (error) {
       console.error("Failed to save daily log:", error);
       toast({
@@ -153,7 +153,13 @@ export default function ProjectLogPage() {
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
       const ratio = canvasWidth / canvasHeight;
-      const imgHeight = pdfWidth / ratio;
+      let imgHeight = pdfWidth / ratio;
+      
+      // If the content is smaller than a page, fit it to the page height
+      if (imgHeight > pdfHeight) {
+        imgHeight = pdfHeight;
+      }
+
       let heightLeft = imgHeight;
       let position = 0;
 
@@ -297,3 +303,5 @@ export default function ProjectLogPage() {
     </div>
   );
 }
+
+    
