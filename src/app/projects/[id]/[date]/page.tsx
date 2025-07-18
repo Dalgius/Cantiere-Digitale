@@ -211,11 +211,8 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                     </p>
                   </div>
                   <span style={{ 
-                    backgroundColor: '#ffffff', 
-                    border: '1px solid #d1d5db',
                     color: '#374151', 
                     padding: '5px 10px', 
-                    borderRadius: '16px', 
                     fontSize: '12px',
                     fontWeight: '500'
                   }}>
