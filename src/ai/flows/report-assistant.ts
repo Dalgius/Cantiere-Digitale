@@ -77,6 +77,18 @@ const prompt = ai.definePrompt({
   },
 });
 
+/**
+ * Cleans and sanitizes the input text to make it more reliable for the AI model.
+ * It removes extra whitespace and potentially problematic non-standard characters.
+ * @param text The raw text to clean.
+ * @returns A sanitized version of the text.
+ */
+function sanitizeText(text: string): string {
+  if (!text) return '';
+  // Replace multiple whitespace characters (including newlines) with a single space, then trim.
+  return text.replace(/\s+/g, ' ').trim();
+}
+
 const reportAssistantFlow = ai.defineFlow(
   {
     name: 'reportAssistantFlow',
@@ -84,7 +96,13 @@ const reportAssistantFlow = ai.defineFlow(
     outputSchema: ReportAssistantOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    // Sanitize the user's drafted content before passing it to the prompt.
+    const sanitizedInput = {
+      ...input,
+      draftContent: sanitizeText(input.draftContent),
+    };
+    
+    const {output} = await prompt(sanitizedInput);
     return output!;
   }
 );
