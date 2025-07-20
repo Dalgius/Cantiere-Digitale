@@ -5,10 +5,10 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Paperclip, Send, X } from "lucide-react"
+import { Paperclip, Send, X, Mic, MicOff } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import type { Annotation, AnnotationType } from "@/lib/types"
-import React, { useState } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { useToast } from "@/hooks/use-toast"
 import { ReportAssistantButton } from "./report-assistant-button"
 import Image from "next/image"
@@ -25,6 +25,94 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
   const [attachments, setAttachments] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const { toast } = useToast();
+
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  useEffect(() => {
+    // Feature detection: Check if browser supports SpeechRecognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      console.warn("Speech Recognition not supported by this browser.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'it-IT';
+
+    recognition.onresult = (event) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        } else {
+          interimTranscript += event.results[i][0].transcript;
+        }
+      }
+      // Append the final transcript to the content, adding a space if needed.
+       if (finalTranscript) {
+          setContent(prevContent => prevContent ? `${prevContent.trim()} ${finalTranscript.trim()}` : finalTranscript.trim());
+      }
+    };
+
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error", event.error);
+       toast({
+        variant: "destructive",
+        title: "Errore Riconoscimento Vocale",
+        description: `Si è verificato un errore: ${event.error}`,
+      });
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      // Only set to false if it was intentionally stopped.
+      // If it stops on its own, we might want to restart it depending on the app logic.
+      if (isListening) {
+        setIsListening(false);
+      }
+    };
+
+    recognitionRef.current = recognition;
+
+    return () => {
+      recognition.stop();
+    };
+  }, []); // isListening dependency removed to avoid re-creating recognition object
+
+  const handleMicClick = () => {
+    const recognition = recognitionRef.current;
+    if (!recognition) {
+        toast({
+            variant: "destructive",
+            title: "Funzione non supportata",
+            description: "Il tuo browser non supporta il riconoscimento vocale.",
+        });
+        return;
+    }
+
+    if (isListening) {
+      recognition.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognition.start();
+        setIsListening(true);
+      } catch (e) {
+        console.error("Could not start recognition", e)
+        toast({
+            variant: "destructive",
+            title: "Impossibile avviare la registrazione",
+            description: "Assicurati di aver dato i permessi per il microfono.",
+        });
+      }
+    }
+  };
+
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -77,6 +165,8 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
     setContent(text);
   }
 
+  const isSpeechRecognitionSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+
   return (
     <form onSubmit={handleSubmit}>
       <fieldset disabled={isDisabled} className="disabled:opacity-70">
@@ -105,7 +195,7 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
               <Label htmlFor="annotation-content">Contenuto</Label>
               <Textarea
                 id="annotation-content"
-                placeholder="Descrivi qui l'annotazione..."
+                placeholder="Descrivi qui l'annotazione o usa il microfono per dettare..."
                 rows={5}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -143,7 +233,7 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
           <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-2">
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button variant="outline" type="button" asChild disabled={isDisabled} className="w-full sm:w-auto">
-                <label htmlFor="file-upload" className="cursor-pointer w-full">
+                <label htmlFor="file-upload" className="cursor-pointer w-full flex items-center justify-center">
                   <Paperclip className="mr-2 h-4 w-4" />
                   Allega File
                   <input 
@@ -165,6 +255,18 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
                 variant="outline" 
                 className="w-full sm:w-auto" 
               />
+               {isSpeechRecognitionSupported && (
+                  <Button 
+                    type="button" 
+                    variant={isListening ? "destructive" : "outline"} 
+                    onClick={handleMicClick}
+                    disabled={isDisabled}
+                    className="w-full sm:w-auto"
+                  >
+                    {isListening ? <MicOff className="mr-2 h-4 w-4" /> : <Mic className="mr-2 h-4 w-4" />}
+                    {isListening ? 'Interrompi' : 'Dettatura'}
+                  </Button>
+                )}
             </div>
             <Button type="submit" disabled={isDisabled} className="w-full sm:w-auto">
               <Send className="mr-2 h-4 w-4" />
