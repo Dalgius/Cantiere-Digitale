@@ -28,6 +28,7 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
 
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const transcriptRef = useRef('');
 
   useEffect(() => {
     // Feature detection: Check if browser supports SpeechRecognition
@@ -43,20 +44,11 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
     recognition.lang = 'it-IT';
 
     recognition.onresult = (event) => {
-      let interimTranscript = '';
-      let finalTranscript = '';
-
+      let currentTranscript = '';
       for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          finalTranscript += event.results[i][0].transcript;
-        } else {
-          interimTranscript += event.results[i][0].transcript;
-        }
+        currentTranscript += event.results[i][0].transcript;
       }
-      // Append the final transcript to the content, adding a space if needed.
-       if (finalTranscript) {
-          setContent(prevContent => prevContent ? `${prevContent.trim()} ${finalTranscript.trim()}` : finalTranscript.trim());
-      }
+      transcriptRef.current = currentTranscript;
     };
 
     recognition.onerror = (event) => {
@@ -70,19 +62,22 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
     };
 
     recognition.onend = () => {
-      // Only set to false if it was intentionally stopped.
-      // If it stops on its own, we might want to restart it depending on the app logic.
-      if (isListening) {
-        setIsListening(false);
+      // Update the content with the final transcript only when stopping.
+      if (transcriptRef.current) {
+         setContent(prevContent => prevContent ? `${prevContent.trim()} ${transcriptRef.current.trim()}` : transcriptRef.current.trim());
+         transcriptRef.current = ''; // Clear for next use
       }
+      setIsListening(false);
     };
 
     recognitionRef.current = recognition;
 
     return () => {
-      recognition.stop();
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
     };
-  }, []); // isListening dependency removed to avoid re-creating recognition object
+  }, [toast]);
 
   const handleMicClick = () => {
     const recognition = recognitionRef.current;
@@ -97,7 +92,7 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
 
     if (isListening) {
       recognition.stop();
-      setIsListening(false);
+      // onend will handle setting isListening to false and updating content
     } else {
       try {
         recognition.start();
