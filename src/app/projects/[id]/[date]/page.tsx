@@ -773,7 +773,7 @@ const handleExportToPDF = async () => {
               
               <Card>
                 <CardHeader className="bg-muted/30 border-b">
-                   <CardTitle className="font-headline text-lg">Timeline del Giorno</CardTitle>
+                   <CardTitle className="font-headline text-lg">Annotazioni</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 p-4 md:p-6">
                   {dailyLog.annotations.map(annotation => (
