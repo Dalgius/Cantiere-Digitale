@@ -1,7 +1,6 @@
 
 'use client'
 
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -164,68 +163,63 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
 
   return (
     <form onSubmit={handleSubmit}>
-      <fieldset disabled={isDisabled} className="disabled:opacity-70">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline text-lg">Aggiungi Voce di Diario</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="annotation-type">Tipo di Annotazione</Label>
-              <Select value={type} onValueChange={(value) => setType(value as AnnotationType)} disabled={isDisabled}>
-                <SelectTrigger id="annotation-type">
-                  <SelectValue placeholder="Seleziona il tipo..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Descrizione Lavori Svolti">Descrizione Lavori Svolti</SelectItem>
-                  <SelectItem value="Istruzioni / Ordine di Servizio">Istruzioni / Ordine di Servizio</SelectItem>
-                  <SelectItem value="Osservazioni e Annotazioni">Osservazioni e Annotazioni</SelectItem>
-                  <SelectItem value="Verbale di Constatazione">Verbale di Constatazione</SelectItem>
-                  <SelectItem value="Verbale di Accettazione Materiali">Verbale di Accettazione Materiali</SelectItem>
-                  <SelectItem value="Contestazione dell'Impresa">Contestazione dell'Impresa</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="annotation-content">Contenuto</Label>
-              <Textarea
-                id="annotation-content"
-                placeholder="Descrivi qui l'annotazione o usa il microfono per dettare..."
-                rows={5}
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                disabled={isDisabled}
-              />
-            </div>
-             {previews.length > 0 && (
-              <div className="space-y-2">
-                <Label>Allegati</Label>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
-                  {previews.map((src, index) => (
-                    <div key={index} className="relative group">
-                      <Image
-                        src={src}
-                        alt={`Anteprima ${index + 1}`}
-                        width={100}
-                        height={100}
-                        className="rounded-md object-cover aspect-square"
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={() => removeAttachment(index)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
+      <fieldset disabled={isDisabled} className="space-y-4 disabled:opacity-70">
+        <div>
+          <Label htmlFor="annotation-type" className="text-xs text-muted-foreground">Tipo di Annotazione</Label>
+          <Select value={type} onValueChange={(value) => setType(value as AnnotationType)} disabled={isDisabled}>
+            <SelectTrigger id="annotation-type" className="mt-1">
+              <SelectValue placeholder="Seleziona il tipo..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Descrizione Lavori Svolti">Descrizione Lavori Svolti</SelectItem>
+              <SelectItem value="Istruzioni / Ordine di Servizio">Istruzioni / Ordine di Servizio</SelectItem>
+              <SelectItem value="Osservazioni e Annotazioni">Osservazioni e Annotazioni</SelectItem>
+              <SelectItem value="Verbale di Constatazione">Verbale di Constatazione</SelectItem>
+              <SelectItem value="Verbale di Accettazione Materiali">Verbale di Accettazione Materiali</SelectItem>
+              <SelectItem value="Contestazione dell'Impresa">Contestazione dell'Impresa</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label htmlFor="annotation-content" className="text-xs text-muted-foreground">Contenuto</Label>
+          <Textarea
+            id="annotation-content"
+            placeholder="Descrivi qui l'annotazione o usa il microfono per dettare..."
+            rows={5}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            disabled={isDisabled}
+            className="mt-1"
+          />
+        </div>
+        {previews.length > 0 && (
+          <div className="space-y-2">
+            <Label>Allegati</Label>
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+              {previews.map((src, index) => (
+                <div key={index} className="relative group">
+                  <Image
+                    src={src}
+                    alt={`Anteprima ${index + 1}`}
+                    width={100}
+                    height={100}
+                    className="rounded-md object-cover aspect-square"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => removeAttachment(index)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-              </div>
-            )}
-          </CardContent>
-          <CardFooter className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-2">
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-2">
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button variant="outline" type="button" asChild disabled={isDisabled} className="w-full sm:w-auto">
                 <label htmlFor="file-upload" className="cursor-pointer w-full flex items-center justify-center">
@@ -267,8 +261,7 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
               <Send className="mr-2 h-4 w-4" />
               Aggiungi
             </Button>
-          </CardFooter>
-        </Card>
+        </div>
       </fieldset>
     </form>
   )

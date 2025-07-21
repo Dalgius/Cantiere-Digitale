@@ -8,7 +8,7 @@ import { NewAnnotationForm } from "@/components/log/new-annotation-form";
 import { ResourcesTable } from "@/components/log/resources-table";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Save, Loader2, Building2, Trash2 } from "lucide-react";
+import { FileText, Download, Save, Loader2, Building2, Trash2, Plus } from "lucide-react";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useCallback, useRef, forwardRef } from "react";
@@ -26,6 +26,8 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
+import { Separator } from "@/components/ui/separator";
+
 
 function PageLoader() {
   return (
@@ -775,28 +777,32 @@ const handleExportToPDF = async () => {
                 <CardHeader className="bg-primary text-primary-foreground border-b">
                    <CardTitle className="font-headline text-lg">Annotazioni</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 p-4 md:p-6">
-                  {dailyLog.annotations.map(annotation => (
-                    <AnnotationCard 
-                      key={annotation.id} 
-                      annotation={annotation} 
-                      isLogValidated={dailyLog.isValidated}
-                      onDelete={() => removeAnnotation(annotation.id)}
-                      />
-                  ))}
-                  {dailyLog.annotations.length === 0 && (
-                      <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                          <p className="text-muted-foreground">Nessuna annotazione per oggi. Inizia ad aggiungerne una.</p>
-                      </div>
-                  )}
+                <CardContent className="p-0">
+                  <div className="p-4 md:p-6 space-y-4">
+                    {dailyLog.annotations.map(annotation => (
+                      <AnnotationCard 
+                        key={annotation.id} 
+                        annotation={annotation} 
+                        isLogValidated={dailyLog.isValidated}
+                        onDelete={() => removeAnnotation(annotation.id)}
+                        />
+                    ))}
+                    {dailyLog.annotations.length === 0 && (
+                        <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                            <p className="text-muted-foreground">Nessuna annotazione per oggi. Inizia ad aggiungerne una.</p>
+                        </div>
+                    )}
+                  </div>
+                  <Separator />
+                  <div className="p-4 md:p-6">
+                    <NewAnnotationForm 
+                      onAddAnnotation={addAnnotation} 
+                      isDisabled={false}
+                      projectDescription={project.description}
+                    />
+                  </div>
                 </CardContent>
               </Card>
-
-            <NewAnnotationForm 
-              onAddAnnotation={addAnnotation} 
-              isDisabled={false}
-              projectDescription={project.description}
-            />
 
             <ResourcesTable 
                 resources={dailyLog.resources} 
