@@ -99,22 +99,23 @@ export default function NewProjectPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="name">Nome Progetto</Label>
-              <Input id="name" value={formData.name} onChange={handleChange} placeholder="Es. Scuola Primaria 'G. Rodari'" disabled={isLoading} />
+              <Input id="name" name="name" value={formData.name} onChange={handleChange} placeholder="Es. Scuola Primaria 'G. Rodari'" disabled={isLoading} />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="client">Cliente / Committente</Label>
-                <Input id="client" value={formData.client} onChange={handleChange} placeholder="Es. Comune di Milano" disabled={isLoading}/>
+                <Input id="client" name="client" value={formData.client} onChange={handleChange} placeholder="Es. Comune di Milano" disabled={isLoading}/>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="contractor">Impresa Appaltatrice</Label>
-                <Input id="contractor" value={formData.contractor} onChange={handleChange} placeholder="Es. La Costruttoria S.r.l." disabled={isLoading}/>
+                <Input id="contractor" name="contractor" value={formData.contractor} onChange={handleChange} placeholder="Es. La Costruttoria S.r.l." disabled={isLoading}/>
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Descrizione Breve</Label>
               <Textarea
                 id="description"
+                name="description"
                 value={formData.description}
                 onChange={handleChange}
                 placeholder="Descrivi brevemente l'oggetto dei lavori..."

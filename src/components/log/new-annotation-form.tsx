@@ -184,6 +184,7 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
           <Label htmlFor="annotation-content" className="text-xs text-muted-foreground">Contenuto</Label>
           <Textarea
             id="annotation-content"
+            name="annotation-content"
             placeholder="Descrivi qui l'annotazione o usa il microfono per dettare..."
             rows={5}
             value={content}

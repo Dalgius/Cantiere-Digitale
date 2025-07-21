@@ -46,10 +46,11 @@ export function WeatherForm({ initialWeather, date: initialDate, isDisabled, onW
   return (
     <fieldset disabled={isDisabled} className="grid grid-cols-2 md:grid-cols-4 gap-4 items-end">
       <div className="space-y-2">
-        <Label>Data</Label>
+        <Label htmlFor="date-popover">Data</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
+              id="date-popover"
               variant={"outline"}
               className="w-full justify-start text-left font-normal"
               disabled={true} // Date is controlled by the URL now
@@ -72,9 +73,9 @@ export function WeatherForm({ initialWeather, date: initialDate, isDisabled, onW
       </div>
 
       <div className="space-y-2">
-        <Label>Stato</Label>
+        <Label htmlFor="weather-state">Stato</Label>
         <Select value={weather.state} onValueChange={(v) => handleWeatherChange('state', v as Weather['state'])} disabled={isDisabled}>
-          <SelectTrigger>
+          <SelectTrigger id="weather-state">
             <SelectValue placeholder="Seleziona stato" />
           </SelectTrigger>
           <SelectContent>
@@ -88,10 +89,12 @@ export function WeatherForm({ initialWeather, date: initialDate, isDisabled, onW
       </div>
       
       <div className="space-y-2">
-        <Label>Temperatura</Label>
+        <Label htmlFor="temperature">Temperatura</Label>
         <div className="relative">
             <Thermometer className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
+                id="temperature"
+                name="temperature"
                 type="number" 
                 value={weather.temperature} 
                 onChange={(e) => handleWeatherChange('temperature', parseInt(e.target.value) || 0)}
@@ -103,9 +106,9 @@ export function WeatherForm({ initialWeather, date: initialDate, isDisabled, onW
       </div>
       
       <div className="space-y-2">
-        <Label>Precipitazioni</Label>
+        <Label htmlFor="precipitation">Precipitazioni</Label>
         <Select value={weather.precipitation} onValueChange={(v) => handleWeatherChange('precipitation', v as Weather['precipitation'])} disabled={isDisabled}>
-          <SelectTrigger>
+          <SelectTrigger id="precipitation">
             <SelectValue placeholder="Seleziona precipitazioni" />
           </SelectTrigger>
           <SelectContent>

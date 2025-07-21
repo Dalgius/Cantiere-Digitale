@@ -87,7 +87,7 @@ function NewResourceForm({ onAddResource, isDisabled }: { onAddResource: Resourc
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="type" className="text-right">Tipo</Label>
             <Select value={type} onValueChange={(v) => setType(v as ResourceType)}>
-                <SelectTrigger className="col-span-3">
+                <SelectTrigger id="type" className="col-span-3">
                     <SelectValue placeholder="Seleziona tipo..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -98,19 +98,19 @@ function NewResourceForm({ onAddResource, isDisabled }: { onAddResource: Resourc
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Descrizione</Label>
-            <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
+            <Input id="description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="company" className="text-right">Impresa</Label>
-            <Input id="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Es. Subappaltatore Srl" className="col-span-3" />
+            <Input id="company" name="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Es. Subappaltatore Srl" className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="quantity" className="text-right">Quantità</Label>
-            <Input id="quantity" type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min="1" className="col-span-3" />
+            <Input id="quantity" name="quantity" type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min="1" className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="notes" className="text-right">Note</Label>
-            <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="col-span-3" />
+            <Textarea id="notes" name="notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="col-span-3" />
           </div>
         </fieldset>
         <DialogFooter>
