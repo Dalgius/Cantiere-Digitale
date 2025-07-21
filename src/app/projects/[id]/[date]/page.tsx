@@ -772,7 +772,7 @@ const handleExportToPDF = async () => {
              <DailyLogHeader logDate={dailyLog.date} weather={dailyLog.weather} isDisabled={false} onWeatherChange={(newWeather) => setDailyLog(prev => prev ? {...prev, weather: newWeather} : null)} />
               
               <Card>
-                <CardHeader className="bg-muted/30 border-b">
+                <CardHeader className="bg-primary text-primary-foreground border-b">
                    <CardTitle className="font-headline text-lg">Annotazioni</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 p-4 md:p-6">
