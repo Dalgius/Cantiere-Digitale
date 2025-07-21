@@ -200,19 +200,11 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                 }}>
                   <div>
                     <p style={{ 
-                      fontWeight: 'bold', 
-                      margin: '0', 
-                      fontSize: '16px',
-                      color: '#1f2937'
-                    }}>
-                      {annotation.author.name}
-                    </p>
-                    <p style={{ 
                       fontSize: '14px', 
                       color: '#6b7280', 
                       margin: '2px 0 0 0' 
                     }}>
-                      {annotation.author.role} - {format(annotation.timestamp, 'd MMMM yyyy, HH:mm', { locale: it })}
+                      {format(annotation.timestamp, 'd MMMM yyyy, HH:mm', { locale: it })}
                     </p>
                   </div>
                   <span style={{ 
