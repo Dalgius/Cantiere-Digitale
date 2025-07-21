@@ -1,47 +1,47 @@
+
 // src/app/projects/[id]/page.tsx
 import { getDailyLogsForProject } from "@/lib/data-service";
 import { redirect } from "next/navigation";
 
+// Simplify the component to directly accept params
 export default async function ProjectPageRedirect({ 
-  params: paramsPromise 
+  params 
 }: { 
-  params: Promise<{ id: string }> 
+  params: { id: string } 
 }) {
-  const params = await paramsPromise;  // Await qui per risolvere params
   const projectId = params.id;
 
+  // Add a robust check for projectId
   if (!projectId) {
+    console.warn("ProjectPageRedirect: Project ID is missing, redirecting to home.");
     redirect('/');
+    return; // Ensure no further code execution
   }
 
   const projectLogs = await getDailyLogsForProject(projectId);
 
-  // Handle case with no logs
+  // Handle case with no logs by redirecting to today's date for a new log entry.
   if (!projectLogs || projectLogs.length === 0) {
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
     redirect(`/projects/${projectId}/${todayStr}`);
+    return; // Ensure no further code execution
   }
 
-  // Find most recent valid date efficiently
+  // Find the most recent valid date efficiently
   let latestDate: Date | null = null;
   
   for (const log of projectLogs) {
-    try {
+    // Ensure log.date is valid before processing
+    if (log && log.date && !isNaN(new Date(log.date).getTime())) {
       const logDate = new Date(log.date);
-      // Ensure logDate is a valid date before comparison
-      if (!isNaN(logDate.getTime())) {
-        if (!latestDate || logDate > latestDate) {
-          latestDate = logDate;
-        }
+      if (!latestDate || logDate > latestDate) {
+        latestDate = logDate;
       }
-    } catch {
-      // Skip invalid dates
-      continue;
     }
   }
 
-  // Fallback to today if no valid dates found
+  // Fallback to today if no valid dates were found in the logs
   const targetDate = latestDate || new Date();
   const dateStr = targetDate.toISOString().split('T')[0];
   
