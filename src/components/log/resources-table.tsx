@@ -86,7 +86,7 @@ function NewResourceForm({ onAddResource, isDisabled }: { onAddResource: Resourc
         <fieldset disabled={isDisabled} className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="type" className="text-right">Tipo</Label>
-            <Select name="resource-type-select" value={type} onValueChange={(v) => setType(v as ResourceType)}>
+            <Select name="resource-type" id="resource-type" value={type} onValueChange={(v) => setType(v as ResourceType)}>
                 <SelectTrigger id="type" className="col-span-3">
                     <SelectValue placeholder="Seleziona tipo..." />
                 </SelectTrigger>
@@ -127,7 +127,7 @@ function NewResourceForm({ onAddResource, isDisabled }: { onAddResource: Resourc
 export function ResourcesTable({ resources, onAddResource, onRemoveResource, isDisabled }: ResourcesTableProps) {
   return (
     <Card className={isDisabled ? 'opacity-70 bg-secondary/30' : ''}>
-      <CardHeader className="flex flex-row items-center justify-between bg-primary text-primary-foreground border-b">
+      <CardHeader className="flex flex-row items-center justify-between bg-primary text-primary-foreground border-b p-3">
         <CardTitle className="font-headline text-lg">Risorse Impiegate</CardTitle>
       </CardHeader>
       <CardContent className="p-0">

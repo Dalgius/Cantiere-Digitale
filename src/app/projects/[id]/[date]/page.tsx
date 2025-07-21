@@ -708,7 +708,7 @@ const handleExportToPDF = async () => {
             console.error("Failed to delete attachments:", error);
         }
     }
-  }, [dailyLog, toast]);
+  }, [dailyLog, toast, handleSave]);
 
   const removeResource = useCallback(async (resourceId: string) => {
     if (!dailyLog) return;
@@ -723,7 +723,7 @@ const handleExportToPDF = async () => {
     if (updatedLog.annotations.length === 0 && updatedLog.resources.length === 0) {
         await handleSave(updatedLog);
     }
-  }, [dailyLog]);
+  }, [dailyLog, handleSave]);
 
 
   if (isLoading || !project || !dailyLog) {
@@ -766,7 +766,7 @@ const handleExportToPDF = async () => {
              <DailyLogHeader logDate={dailyLog.date} weather={dailyLog.weather} isDisabled={false} onWeatherChange={(newWeather) => setDailyLog(prev => prev ? {...prev, weather: newWeather} : null)} />
               
               <Card>
-                <CardHeader className="bg-primary text-primary-foreground border-b">
+                <CardHeader className="bg-primary text-primary-foreground border-b p-3">
                    <CardTitle className="font-headline text-lg">Annotazioni</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
