@@ -480,6 +480,7 @@ export default function ProjectLogPage() {
         title: "Dati Salvati",
         description: "Le informazioni della giornata sono state salvate con successo.",
       });
+      // Force a refetch of all data to ensure calendar is updated correctly
       fetchData(projectId, dateString);
     } catch (error) {
       console.error("Failed to save daily log:", error);
@@ -819,3 +820,5 @@ const handleExportToPDF = async () => {
     </div>
   );
 }
+
+    
