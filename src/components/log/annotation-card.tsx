@@ -8,8 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { FileUp, Lock, PenSquare, Paperclip, CheckCircle2, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import Image from 'next/image';
 
 interface AnnotationCardProps {
@@ -37,30 +36,12 @@ export function AnnotationCard({ annotation, isLogValidated, onDelete }: Annotat
     setFormattedTimestamp(format(new Date(annotation.timestamp), 'd MMMM yyyy, HH:mm', { locale: it }));
   }, [annotation.timestamp]);
 
-  const getAvatarFallback = (name: string) => {
-    if (!name) return 'U';
-    const parts = name.split(' ');
-    if (parts.length > 1) {
-      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  }
-
   return (
     <Card className={`transition-all ${isLogValidated ? 'bg-secondary/30' : 'bg-card'}`}>
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={undefined} data-ai-hint="person face" />
-            <AvatarFallback>{getAvatarFallback(annotation.author.name)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <CardTitle className="text-base">{annotation.author.name}</CardTitle>
-            <CardDescription>{annotation.author.role}</CardDescription>
-          </div>
-        </div>
-        <div className="text-right flex items-center gap-2">
-           <Badge variant={getBadgeVariant(annotation.type)}>{annotation.type}</Badge>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <Badge variant={getBadgeVariant(annotation.type)}>{annotation.type}</Badge>
+        <div className="flex items-center gap-2">
+           <p className="text-xs text-muted-foreground">{formattedTimestamp}</p>
            <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => onDelete(annotation.id)} disabled={isLogValidated}>
              <Trash2 className="h-4 w-4" />
            </Button>
@@ -84,11 +65,6 @@ export function AnnotationCard({ annotation, isLogValidated, onDelete }: Annotat
           </div>
         )}
       </CardContent>
-       <CardFooter>
-         <p className="text-xs text-muted-foreground mt-1 w-full text-right">
-            {formattedTimestamp}
-          </p>
-      </CardFooter>
     </Card>
   );
 }
