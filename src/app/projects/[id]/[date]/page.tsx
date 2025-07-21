@@ -771,22 +771,26 @@ const handleExportToPDF = async () => {
           <div className="lg:col-span-3 space-y-6 mt-8 lg:mt-0">
              <DailyLogHeader logDate={dailyLog.date} weather={dailyLog.weather} isDisabled={false} onWeatherChange={(newWeather) => setDailyLog(prev => prev ? {...prev, weather: newWeather} : null)} />
               
-              <div className="space-y-4">
-                <h2 className="font-headline text-2xl font-bold">Timeline del Giorno</h2>
-                {dailyLog.annotations.map(annotation => (
-                  <AnnotationCard 
-                    key={annotation.id} 
-                    annotation={annotation} 
-                    isLogValidated={dailyLog.isValidated}
-                    onDelete={() => removeAnnotation(annotation.id)}
-                    />
-                ))}
-                {dailyLog.annotations.length === 0 && (
-                    <div className="text-center py-12 border-2 border-dashed rounded-lg">
-                        <p className="text-muted-foreground">Nessuna annotazione per oggi. Inizia ad aggiungerne una.</p>
-                    </div>
-                )}
-              </div>
+              <Card>
+                <CardHeader className="bg-muted/30 border-b">
+                   <CardTitle className="font-headline text-lg">Timeline del Giorno</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 p-4 md:p-6">
+                  {dailyLog.annotations.map(annotation => (
+                    <AnnotationCard 
+                      key={annotation.id} 
+                      annotation={annotation} 
+                      isLogValidated={dailyLog.isValidated}
+                      onDelete={() => removeAnnotation(annotation.id)}
+                      />
+                  ))}
+                  {dailyLog.annotations.length === 0 && (
+                      <div className="text-center py-12 border-2 border-dashed rounded-lg">
+                          <p className="text-muted-foreground">Nessuna annotazione per oggi. Inizia ad aggiungerne una.</p>
+                      </div>
+                  )}
+                </CardContent>
+              </Card>
 
             <NewAnnotationForm 
               onAddAnnotation={addAnnotation} 

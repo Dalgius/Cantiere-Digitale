@@ -68,8 +68,8 @@ export function ResourcesTable({ resources, onAddResource, onRemoveResource, isD
   }
 
   return (
-    <Card className={isDisabled ? 'bg-secondary/30' : ''}>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className={isDisabled ? 'opacity-70 bg-secondary/30' : ''}>
+      <CardHeader className="flex flex-row items-center justify-between bg-muted/30 border-b">
         <CardTitle className="font-headline text-lg">Risorse Impiegate</CardTitle>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
