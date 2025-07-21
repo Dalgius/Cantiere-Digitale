@@ -80,7 +80,10 @@ function ActionsCard({ onSave, onExport, isSaving, isExporting }: { onSave: () =
 }
 
 // Componente dedicato per il layout di stampa
-const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLog }>(({ project, log }, ref) => {
+const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLog, user: any }>(({ project, log, user }, ref) => {
+  const direttoreLavori = project.stakeholders.find(s => s.role === 'Direttore dei Lavori (DL)');
+  const dlName = direttoreLavori ? direttoreLavori.name : (user?.displayName || '');
+
   return (
     <div 
       ref={ref} 
@@ -99,7 +102,6 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
         display: 'block'
       }}
     >
-      {/* Header modificato - scritta centrata in alto */}
       <div style={{ 
         textAlign: 'center',
         borderBottom: '3px solid #1f2937', 
@@ -135,9 +137,17 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
           <span>Cliente: {project.client}</span>
           <span>Impresa: {project.contractor}</span>
         </div>
+        <div style={{
+          marginTop: '20px',
+          fontSize: '16px',
+          fontWeight: 'bold',
+          color: '#374151'
+        }}>
+          <div>Direttore dei Lavori</div>
+          <div>{dlName}</div>
+        </div>
       </div>
 
-      {/* Data semplificata - solo la data */}
       <div style={{ marginBottom: '30px' }}>
         <div style={{ 
           border: '2px solid #e5e7eb', 
@@ -168,7 +178,6 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
         </div>
       </div>
 
-      {/* Annotazioni con titolo forzatamente centrato */}
       <div style={{ marginBottom: '30px' }}>
         <h3 style={{
           fontSize: '22px', 
@@ -198,15 +207,6 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                   alignItems: 'flex-start', 
                   marginBottom: '10px' 
                 }}>
-                  <div>
-                    <p style={{ 
-                      fontSize: '14px', 
-                      color: '#6b7280', 
-                      margin: '2px 0 0 0' 
-                    }}>
-                      {format(annotation.timestamp, 'd MMMM yyyy, HH:mm', { locale: it })}
-                    </p>
-                  </div>
                   <span style={{ 
                     color: '#374151', 
                     padding: '5px 10px', 
@@ -217,6 +217,13 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                   }}>
                     {annotation.type}
                   </span>
+                  <p style={{ 
+                    fontSize: '14px', 
+                    color: '#6b7280', 
+                    margin: '2px 0 0 0' 
+                  }}>
+                    {format(annotation.timestamp, 'd MMMM yyyy, HH:mm', { locale: it })}
+                  </p>
                 </div>
                 <div style={{ 
                   fontSize: '15px', 
@@ -242,7 +249,6 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
         )}
       </div>
 
-      {/* Risorse - tabella modificata senza colonna Ore, con colonna Note */}
       <div style={{ marginBottom: '30px' }}>
         <h3 style={{ 
           fontSize: '22px', 
@@ -359,7 +365,6 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
         )}
       </div>
 
-      {/* Footer */}
       <div style={{ 
         paddingTop: '30px', 
         marginTop: '30px', 
@@ -742,7 +747,7 @@ const handleExportToPDF = async () => {
       <Header />
       
       {isPreparing && portalContainer && createPortal(
-        <PrintableLog ref={printRef} project={project} log={dailyLog} />,
+        <PrintableLog ref={printRef} project={project} log={dailyLog} user={user} />,
         portalContainer
       )}
 
