@@ -4,7 +4,7 @@
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Paperclip, Send, X, Mic, MicOff } from "lucide-react"
+import { Paperclip, Plus, X, Mic, MicOff } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import type { Annotation, AnnotationType } from "@/lib/types"
 import React, { useState, useEffect, useRef } from "react"
@@ -258,8 +258,8 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
                 )}
             </div>
             <Button type="submit" disabled={isDisabled} className="w-full sm:w-auto">
-              <Send className="mr-2 h-4 w-4" />
-              Aggiungi
+              <Plus className="mr-2 h-4 w-4" />
+              Aggiungi Annotazione
             </Button>
         </div>
       </fieldset>
