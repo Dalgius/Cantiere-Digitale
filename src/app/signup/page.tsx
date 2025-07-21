@@ -72,7 +72,7 @@ export default function SignUpPage() {
               src="/logo.png" 
               alt="Cantiere Digitale Logo" 
               width={160} 
-              height={50}
+              height={42.67}
               priority
             />
         </div>

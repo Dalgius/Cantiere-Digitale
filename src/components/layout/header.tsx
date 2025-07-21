@@ -51,7 +51,7 @@ export function Header() {
             src="/logo.png" 
             alt="Cantiere Digitale Logo" 
             width={160} 
-            height={50}
+            height={42.67}
             priority
           />
         </Link>
