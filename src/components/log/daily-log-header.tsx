@@ -13,8 +13,8 @@ interface DailyLogHeaderProps {
 export function DailyLogHeader({ logDate, weather, isDisabled, onWeatherChange }: DailyLogHeaderProps) {
   return (
     <Card className={isDisabled ? 'opacity-70 bg-secondary/30' : ''}>
-      <CardHeader className="bg-muted/30 border-b">
-        <CardTitle className="font-headline text-lg">Condizioni Meteo</CardTitle>
+      <CardHeader className="bg-primary text-primary-foreground border-b">
+        <CardTitle className="font-headline text-lg">Meteo</CardTitle>
       </CardHeader>
       <CardContent className="p-4 md:p-6">
         <WeatherForm 
