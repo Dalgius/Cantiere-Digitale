@@ -6,6 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { signInWithEmailAndPassword, type AuthError } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
@@ -15,7 +16,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { LoginSchema, type TLoginSchema } from '@/lib/auth-schemas';
-import { Logo } from '@/components/layout/logo';
 
 export default function LoginPage() {
   const { toast } = useToast();
@@ -51,8 +51,14 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-4">
          <div className="flex flex-col items-center gap-2">
-            <Logo className="h-10 w-10 text-primary" />
-            <h1 className="font-headline text-2xl font-bold">Cantiere Digitale</h1>
+            <Image 
+              src="https://placehold.co/200x60.png" 
+              alt="Cantiere Digitale Logo" 
+              width={200} 
+              height={60}
+              priority
+              data-ai-hint="logo brand"
+            />
          </div>
         <Card>
           <CardHeader>
