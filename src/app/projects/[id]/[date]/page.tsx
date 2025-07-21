@@ -82,7 +82,7 @@ function ActionsCard({ onSave, onExport, isSaving, isExporting }: { onSave: () =
 // Componente dedicato per il layout di stampa
 const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLog, user: any }>(({ project, log, user }, ref) => {
   const direttoreLavori = project.stakeholders.find(s => s.role === 'Direttore dei Lavori (DL)');
-  const dlName = direttoreLavori ? direttoreLavori.name : (user?.displayName || '');
+  const dlName = user?.displayName || (direttoreLavori ? direttoreLavori.name : '');
 
   return (
     <div 
