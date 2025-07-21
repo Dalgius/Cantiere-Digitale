@@ -1,9 +1,8 @@
 
 // src/app/projects/[id]/page.tsx
-import { getDailyLogsForProject } from "@/lib/data-service";
 import { redirect } from "next/navigation";
 
-// Simplify the component to directly accept params
+// This component always redirects to the daily log for the current date for a given project.
 export default async function ProjectPageRedirect({ 
   params 
 }: { 
@@ -18,32 +17,9 @@ export default async function ProjectPageRedirect({
     return; // Ensure no further code execution
   }
 
-  const projectLogs = await getDailyLogsForProject(projectId);
-
-  // Handle case with no logs by redirecting to today's date for a new log entry.
-  if (!projectLogs || projectLogs.length === 0) {
-    const today = new Date();
-    const todayStr = today.toISOString().split('T')[0];
-    redirect(`/projects/${projectId}/${todayStr}`);
-    return; // Ensure no further code execution
-  }
-
-  // Find the most recent valid date efficiently
-  let latestDate: Date | null = null;
+  // Always redirect to today's date.
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
   
-  for (const log of projectLogs) {
-    // Ensure log.date is valid before processing
-    if (log && log.date && !isNaN(new Date(log.date).getTime())) {
-      const logDate = new Date(log.date);
-      if (!latestDate || logDate > latestDate) {
-        latestDate = logDate;
-      }
-    }
-  }
-
-  // Fallback to today if no valid dates were found in the logs
-  const targetDate = latestDate || new Date();
-  const dateStr = targetDate.toISOString().split('T')[0];
-  
-  redirect(`/projects/${projectId}/${dateStr}`);
+  redirect(`/projects/${projectId}/${todayStr}`);
 }
