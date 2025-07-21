@@ -52,12 +52,11 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-4">
          <div className="flex flex-col items-center gap-2">
             <Image 
-              src="https://placehold.co/160x50.png" 
+              src="/logo.png" 
               alt="Cantiere Digitale Logo" 
               width={160} 
               height={50}
               priority
-              data-ai-hint="logo brand"
             />
          </div>
         <Card>
