@@ -156,6 +156,16 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
     const logId = new Date(logData.date).toISOString().split('T')[0];
     const logRef = doc(db, `projects/${projectId}/dailyLogs`, logId);
     
+    // If the log is empty (no annotations and no resources), delete it.
+    const isLogEmpty = (logData.annotations || []).length === 0 && (logData.resources || []).length === 0;
+
+    if (isLogEmpty) {
+        await deleteDoc(logRef);
+        // We don't update lastLogDate here, as it should reflect the last *existing* log.
+        // A more robust solution might involve finding the new latest log. For now, this is sufficient.
+        return;
+    }
+    
     // Create a safe, serializable object for Firestore
     const logToSave = {
       ...logData,

@@ -470,18 +470,20 @@ export default function ProjectLogPage() {
     }
   }, [projectId, dateString, fetchData]);
   
-  const handleSave = async () => {
-    if (!dailyLog || !projectId) return;
+  const handleSave = async (logToSave?: DailyLog) => {
+    const currentLog = logToSave || dailyLog;
+    if (!currentLog || !projectId) return;
+    
     setIsSaving(true);
     try {
-      const { id, ...logToSave } = dailyLog;
-      await saveDailyLog(projectId, logToSave);
+      const { id, ...dataToSave } = currentLog;
+      await saveDailyLog(projectId, dataToSave);
       toast({
         title: "Dati Salvati",
         description: "Le informazioni della giornata sono state salvate con successo.",
       });
       // Force a refetch of all data to ensure calendar is updated correctly
-      fetchData(projectId, dateString);
+      await fetchData(projectId, dateString);
     } catch (error) {
       console.error("Failed to save daily log:", error);
       toast({
@@ -679,57 +681,49 @@ const handleExportToPDF = async () => {
   }, []);
 
   const removeAnnotation = useCallback(async (annotationId: string) => {
-    // Find the annotation to remove from the current state first.
     const annotationToRemove = dailyLog?.annotations.find(a => a.id === annotationId);
-    
-    if (!annotationToRemove) {
-      console.warn(`Annotation with id ${annotationId} not found for deletion.`);
-      return;
+    if (!annotationToRemove) return;
+
+    const updatedLog = {
+      ...dailyLog!,
+      annotations: dailyLog!.annotations.filter(a => a.id !== annotationId),
+    };
+    setDailyLog(updatedLog);
+
+    // If the log becomes empty, save it immediately (which will delete it)
+    if (updatedLog.annotations.length === 0 && updatedLog.resources.length === 0) {
+        await handleSave(updatedLog);
     }
-
-    // Instantly update the UI by removing the annotation from the local state.
-    setDailyLog(prevLog => {
-        if (!prevLog) return null;
-        return {
-            ...prevLog,
-            annotations: prevLog.annotations.filter(a => a.id !== annotationId),
-        };
-    });
-
-    // If the annotation has attachments, proceed to delete them from Storage.
+    
+    // Asynchronously delete attachments from storage
     if (annotationToRemove.attachments && annotationToRemove.attachments.length > 0) {
-        toast({
-            title: "Eliminazione in corso...",
-            description: "Rimozione dei file allegati in background.",
-        });
-
+        toast({ title: "Eliminazione allegati...", description: "Rimozione dei file in background." });
         const deletePromises = annotationToRemove.attachments.map(att => 
             deleteFileFromStorage(att.url)
         );
-        
         try {
             await Promise.all(deletePromises);
-            toast({
-                title: "File Eliminati",
-                description: "Gli allegati sono stati rimossi con successo.",
-            });
+            toast({ title: "File Eliminati", description: "Allegati rimossi con successo." });
         } catch (error) {
-            console.error("Failed to delete one or more attachments:", error);
-            // Non mostrare un toast di errore aggressivo qui, l'azione principale (rimozione dalla UI)
-            // è già avvenuta. Il fallimento qui significa solo che i file potrebbero rimanere orfani.
+            console.error("Failed to delete attachments:", error);
         }
     }
   }, [dailyLog, toast]);
 
-  const removeResource = useCallback((resourceId: string) => {
-    setDailyLog(prevLog => {
-      if (!prevLog) return null;
-      return {
-        ...prevLog,
-        resources: prevLog.resources.filter(r => r.id !== resourceId),
-      };
-    });
-  }, []);
+  const removeResource = useCallback(async (resourceId: string) => {
+    if (!dailyLog) return;
+    
+    const updatedLog = {
+        ...dailyLog,
+        resources: dailyLog.resources.filter(r => r.id !== resourceId),
+    };
+    setDailyLog(updatedLog);
+    
+    // If the log becomes empty, save it immediately (which will delete it)
+    if (updatedLog.annotations.length === 0 && updatedLog.resources.length === 0) {
+        await handleSave(updatedLog);
+    }
+  }, [dailyLog]);
 
 
   if (isLoading || !project || !dailyLog) {
@@ -737,7 +731,7 @@ const handleExportToPDF = async () => {
   }
   
   const actionHandlers = {
-    onSave: handleSave,
+    onSave: () => handleSave(),
     onExport: handleExportToPDF,
     isSaving,
     isExporting,
@@ -820,5 +814,3 @@ const handleExportToPDF = async () => {
     </div>
   );
 }
-
-    
