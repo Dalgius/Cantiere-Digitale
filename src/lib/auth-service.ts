@@ -1,7 +1,4 @@
-
 // src/lib/auth-service.ts
-'use server';
-
 import { signOut } from 'firebase/auth';
 import { auth } from './firebase';
 
@@ -9,6 +6,10 @@ import { auth } from './firebase';
 // This service only handles server-side authentication actions like signing out.
 
 export async function handleSignOut(): Promise<void> {
+  if (!auth) {
+    console.error("Firebase Auth service is not available.");
+    throw new Error('Servizio di autenticazione non disponibile');
+  }
   try {
     await signOut(auth);
   } catch (error) {
