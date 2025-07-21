@@ -166,7 +166,7 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
       <fieldset disabled={isDisabled} className="space-y-4 disabled:opacity-70">
         <div>
           <Label htmlFor="annotation-type" className="text-xs text-muted-foreground">Tipo di Annotazione</Label>
-          <Select value={type} onValueChange={(value) => setType(value as AnnotationType)} disabled={isDisabled}>
+          <Select name="annotation-type-select" value={type} onValueChange={(value) => setType(value as AnnotationType)} disabled={isDisabled}>
             <SelectTrigger id="annotation-type" className="mt-1">
               <SelectValue placeholder="Seleziona il tipo..." />
             </SelectTrigger>
@@ -195,8 +195,8 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
         </div>
         {previews.length > 0 && (
           <div className="space-y-2">
-            <Label>Allegati</Label>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+            <Label htmlFor="attachments-preview">Allegati</Label>
+            <div id="attachments-preview" className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {previews.map((src, index) => (
                 <div key={index} className="relative group">
                   <Image
@@ -228,6 +228,7 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
                   Allega File
                   <input 
                     id="file-upload" 
+                    name="file-upload"
                     type="file" 
                     multiple 
                     className="sr-only" 

@@ -86,7 +86,7 @@ function NewResourceForm({ onAddResource, isDisabled }: { onAddResource: Resourc
         <fieldset disabled={isDisabled} className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="type" className="text-right">Tipo</Label>
-            <Select value={type} onValueChange={(v) => setType(v as ResourceType)}>
+            <Select name="resource-type-select" value={type} onValueChange={(v) => setType(v as ResourceType)}>
                 <SelectTrigger id="type" className="col-span-3">
                     <SelectValue placeholder="Seleziona tipo..." />
                 </SelectTrigger>
