@@ -48,9 +48,9 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="flex items-center gap-2 mr-4">
           <Image 
-            src="https://placehold.co/180x50.png" 
+            src="https://placehold.co/160x50.png" 
             alt="Cantiere Digitale Logo" 
-            width={180} 
+            width={160} 
             height={50}
             priority
             data-ai-hint="logo brand"
