@@ -81,10 +81,6 @@ export function Header() {
                   <span>Profilo</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <Settings className="mr-2 h-4 w-4" />
-                <span>Impostazioni</span>
-              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onSignOut}>
                 <LogOut className="mr-2 h-4 w-4" />
