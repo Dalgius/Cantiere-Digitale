@@ -234,6 +234,7 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
                     className="sr-only" 
                     disabled={isDisabled}
                     onChange={handleFileChange}
+                    accept="image/*"
                   />
                 </label>
               </Button>
