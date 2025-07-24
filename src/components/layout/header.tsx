@@ -1,7 +1,7 @@
 // src/components/layout/header.tsx
 'use client';
 
-import { Settings, User, LogOut } from "lucide-react"
+import { User, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { 
   DropdownMenu, 
@@ -51,7 +51,7 @@ export function Header() {
             src="/logo.png" 
             alt="Cantiere Digitale Logo" 
             width={160} 
-            height={42.67}
+            height={43}
             priority
           />
         </Link>
