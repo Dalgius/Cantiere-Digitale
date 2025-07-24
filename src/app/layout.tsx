@@ -8,7 +8,7 @@ import { Toaster } from "@/components/ui/toaster";
 export const metadata: Metadata = {
   title: "Cantiere Digitale",
   description: "La versione moderna e definitiva del Giornale dei Lavori.",
-  manifest: "/manifest.json",
+  manifest: "/manifest.json?v=2", // Cache-busting parameter added
 };
 
 export default function RootLayout({
