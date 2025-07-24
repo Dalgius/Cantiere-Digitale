@@ -4,7 +4,7 @@
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Paperclip, Plus, X, Mic, MicOff } from "lucide-react"
+import { Paperclip, Plus, X, Mic, MicOff, Camera } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import type { Annotation, AnnotationType } from "@/lib/types"
 import React, { useState, useEffect, useRef } from "react"
@@ -24,6 +24,9 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
   const [attachments, setAttachments] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const { toast } = useToast();
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
@@ -116,6 +119,8 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
       const newPreviews = filesArray.map(file => URL.createObjectURL(file));
       setPreviews(prev => [...prev, ...newPreviews]);
     }
+     // Reset the input value to allow selecting the same file again
+    if(e.target) e.target.value = '';
   };
 
   const removeAttachment = (index: number) => {
@@ -195,7 +200,7 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
         </div>
         {previews.length > 0 && (
           <div className="space-y-2">
-            <Label htmlFor="attachments-preview">Allegati</Label>
+            <Label>Allegati</Label>
             <div id="attachments-preview" className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
               {previews.map((src, index) => (
                 <div key={index} className="relative group">
@@ -220,31 +225,39 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
             </div>
           </div>
         )}
+        
+        {/* Hidden file inputs */}
+        <input 
+            id="file-upload" 
+            type="file" 
+            multiple 
+            className="sr-only" 
+            disabled={isDisabled}
+            onChange={handleFileChange}
+            accept="image/*"
+            ref={fileInputRef}
+        />
+        <input 
+            id="camera-upload" 
+            type="file"
+            className="sr-only" 
+            disabled={isDisabled}
+            onChange={handleFileChange}
+            accept="image/*"
+            capture="environment"
+            ref={cameraInputRef}
+        />
+        
         <div className="flex flex-col-reverse sm:flex-row sm:justify-between sm:items-center gap-2">
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <Button variant="outline" type="button" asChild disabled={isDisabled} className="w-full sm:w-auto">
-                <label htmlFor="file-upload" className="cursor-pointer w-full flex items-center justify-center">
-                  <Paperclip className="mr-2 h-4 w-4" />
-                  Allega File
-                  <input 
-                    id="file-upload" 
-                    name="file-upload"
-                    type="file" 
-                    multiple 
-                    className="sr-only" 
-                    disabled={isDisabled}
-                    onChange={handleFileChange}
-                    accept="image/*"
-                  />
-                </label>
+              <Button variant="outline" type="button" disabled={isDisabled} onClick={() => fileInputRef.current?.click()} className="w-full sm:w-auto">
+                <Paperclip className="mr-2 h-4 w-4" />
+                Allega File
               </Button>
-              <ReportAssistantButton 
-                projectDescription={projectDescription}
-                draftContent={content}
-                onTextImproved={handleUseImprovedText}
-                variant="outline" 
-                className="w-full sm:w-auto" 
-              />
+              <Button variant="outline" type="button" disabled={isDisabled} onClick={() => cameraInputRef.current?.click()} className="w-full sm:w-auto">
+                <Camera className="mr-2 h-4 w-4" />
+                Scatta Foto
+              </Button>
                {isSpeechRecognitionSupported && (
                   <Button 
                     type="button" 
@@ -257,6 +270,13 @@ export function NewAnnotationForm({ onAddAnnotation, isDisabled, projectDescript
                     {isListening ? 'Interrompi' : 'Dettatura'}
                   </Button>
                 )}
+                 <ReportAssistantButton 
+                    projectDescription={projectDescription}
+                    draftContent={content}
+                    onTextImproved={handleUseImprovedText}
+                    variant="outline" 
+                    className="w-full sm:w-auto" 
+                />
             </div>
             <Button type="submit" disabled={isDisabled} className="w-full sm:w-auto">
               <Plus className="mr-2 h-4 w-4" />
