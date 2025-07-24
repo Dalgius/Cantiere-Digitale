@@ -1,22 +1,23 @@
 {
-  "theme_color": "#6699CC",
-  "background_color": "#F2F2F2",
-  "display": "standalone",
-  "scope": "/",
-  "start_url": "/",
   "name": "Cantiere Digitale",
-  "short_name": "Cantiere Digitale",
+  "short_name": "Cantiere",
   "description": "La versione moderna e definitiva del Giornale dei Lavori.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F2F2F2",
+  "theme_color": "#6699CC",
   "icons": [
     {
-      "src": "/icon-192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
