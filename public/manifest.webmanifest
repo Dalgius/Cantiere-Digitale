@@ -1,6 +1,6 @@
 {
   "name": "Cantiere Digitale",
-  "short_name": "Cantiere",
+  "short_name": "CantiereDigitale",
   "description": "La versione moderna e definitiva del Giornale dei Lavori.",
   "start_url": "/",
   "display": "standalone",
