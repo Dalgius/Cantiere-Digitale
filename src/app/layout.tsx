@@ -6,7 +6,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
-  title: "Cantiere Digitale",
+  title: "DIGICANT",
   description: "La versione moderna e definitiva del Giornale dei Lavori.",
   manifest: "/manifest.webmanifest",
 };

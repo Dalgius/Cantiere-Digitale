@@ -1,3 +1,4 @@
+
 // src/app/login/page.tsx
 'use client';
 
@@ -53,7 +54,7 @@ export default function LoginPage() {
          <div className="flex flex-col items-center gap-2 mb-4">
             <Image 
               src="/logo_square.png" 
-              alt="Cantiere Digitale Logo" 
+              alt="DIGICANT Logo" 
               width={80} 
               height={80}
               priority

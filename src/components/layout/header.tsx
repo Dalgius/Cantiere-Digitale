@@ -1,3 +1,4 @@
+
 // src/components/layout/header.tsx
 'use client';
 
@@ -49,13 +50,12 @@ export function Header() {
         <Link href="/" className="flex items-center gap-2 mr-4">
           <Image 
             src="/logo_square.png" 
-            alt="Cantiere Digitale Logo" 
+            alt="DIGICANT Logo" 
             width={40} 
             height={40}
             priority
             className="rounded-md"
           />
-           <span className="font-headline font-bold text-lg hidden sm:inline-block">Cantiere Digitale</span>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <DropdownMenu>

@@ -1,3 +1,4 @@
+
 // src/app/signup/page.tsx
 'use client';
 
@@ -70,7 +71,7 @@ export default function SignUpPage() {
         <div className="flex flex-col items-center gap-2 mb-4">
             <Image 
               src="/logo_square.png" 
-              alt="Cantiere Digitale Logo" 
+              alt="DIGICANT Logo" 
               width={80} 
               height={80}
               priority
@@ -80,7 +81,7 @@ export default function SignUpPage() {
         <Card>
           <CardHeader>
             <CardTitle>Crea un account</CardTitle>
-            <CardDescription>Inserisci i tuoi dati per iniziare a usare Cantiere Digitale.</CardDescription>
+            <CardDescription>Inserisci i tuoi dati per iniziare a usare DIGICANT.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
