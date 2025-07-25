@@ -67,13 +67,14 @@ export default function SignUpPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="w-full max-w-md space-y-4">
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-2 mb-4">
             <Image 
-              src="/logo.png" 
+              src="/logo_square.png" 
               alt="Cantiere Digitale Logo" 
-              width={160} 
-              height={43}
+              width={80} 
+              height={80}
               priority
+              className="rounded-lg"
             />
         </div>
         <Card>

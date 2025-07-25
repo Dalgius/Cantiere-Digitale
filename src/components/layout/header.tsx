@@ -48,12 +48,14 @@ export function Header() {
       <div className="container flex h-16 items-center">
         <Link href="/" className="flex items-center gap-2 mr-4">
           <Image 
-            src="/logo.png" 
+            src="/logo_square.png" 
             alt="Cantiere Digitale Logo" 
-            width={160} 
-            height={43}
+            width={40} 
+            height={40}
             priority
+            className="rounded-md"
           />
+           <span className="font-headline font-bold text-lg hidden sm:inline-block">Cantiere Digitale</span>
         </Link>
         <div className="flex flex-1 items-center justify-end space-x-4">
           <DropdownMenu>
