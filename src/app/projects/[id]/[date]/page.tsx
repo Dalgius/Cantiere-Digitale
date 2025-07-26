@@ -671,8 +671,8 @@ const handleExportToPDF = async () => {
     setDailyLog(prevLog => {
       if (!prevLog) return null;
       const newResource: Resource = {
-        ...resourceData,
         id: `res-local-${Date.now()}`,
+        ...resourceData,
       };
       return {
         ...prevLog,
@@ -726,12 +726,49 @@ const handleExportToPDF = async () => {
     }
   }, [dailyLog, handleSave]);
   
-  const handleRegisteredResourcesUpdate = async (updatedResources: RegisteredResource[]) => {
-    if (!project) return;
+  const handleRegisteredResourcesUpdate = async (updatedAnagrafica: RegisteredResource[]) => {
+    if (!project || !dailyLog) return;
     try {
-      await updateProject(project.id, { registeredResources: updatedResources });
-      // Update the local project state to immediately reflect changes
-      setProject(prev => prev ? { ...prev, registeredResources: updatedResources } : null);
+      // 1. Salva l'anagrafica aggiornata nel DB
+      await updateProject(project.id, { registeredResources: updatedAnagrafica });
+      
+      // 2. Aggiorna lo stato locale del progetto
+      const updatedProject = { ...project, registeredResources: updatedAnagrafica };
+      setProject(updatedProject);
+      
+      // 3. Sincronizza le risorse del log giornaliero con l'anagrafica
+      let logWasModified = false;
+      const updatedDailyResources = dailyLog.resources.map(dailyResource => {
+        // Trova la risorsa corrispondente nell'anagrafica aggiornata
+        const anagraficaMatch = updatedAnagrafica.find(
+          anagraficaResource => anagraficaResource.id === dailyResource.registeredResourceId
+        );
+
+        // Se c'è una corrispondenza e i dati sono diversi, aggiorna la risorsa giornaliera
+        if (anagraficaMatch && (
+            dailyResource.description !== anagraficaMatch.description ||
+            dailyResource.name !== anagraficaMatch.name ||
+            dailyResource.company !== anagraficaMatch.company
+          )) {
+            logWasModified = true;
+            return {
+              ...dailyResource,
+              description: anagraficaMatch.description,
+              name: anagraficaMatch.name,
+              company: anagraficaMatch.company,
+            };
+          }
+        return dailyResource;
+      });
+
+      // 4. Se il log è stato modificato, aggiorna lo stato locale e salva
+      if (logWasModified) {
+        const updatedLog = { ...dailyLog, resources: updatedDailyResources };
+        setDailyLog(updatedLog);
+        // Salva le modifiche in background senza bloccare l'UI
+        handleSave(updatedLog);
+      }
+
       toast({
           title: "Anagrafica Aggiornata",
           description: "L'elenco delle risorse è stato salvato.",

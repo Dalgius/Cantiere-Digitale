@@ -42,6 +42,7 @@ function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { o
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
   const { toast } = useToast();
+  const [selectedRegisteredId, setSelectedRegisteredId] = useState<string | undefined>(undefined);
 
   const resetForm = () => {
     setType('');
@@ -50,11 +51,13 @@ function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { o
     setCompany('');
     setQuantity(1);
     setNotes('');
+    setSelectedRegisteredId(undefined);
   };
 
   const handleSelectRegisteredResource = (resourceId: string) => {
     const selected = registeredResources.find(r => r.id === resourceId);
     if (selected) {
+      setSelectedRegisteredId(selected.id);
       setType(selected.type);
       setDescription(selected.description);
       setName(selected.name);
@@ -73,6 +76,7 @@ function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { o
     }
 
     onAddResource({
+      registeredResourceId: selectedRegisteredId,
       type: type as ResourceType,
       description,
       name,

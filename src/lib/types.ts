@@ -57,7 +57,8 @@ export type Annotation = {
 };
 
 export type Resource = {
-  id: string;
+  id:string;
+  registeredResourceId?: string; // ID della risorsa in anagrafica (se applicabile)
   type: ResourceType;
   description: string; // Es. "Operaio Specializzato"
   name: string; // Es. "Mario Rossi" o "Martello Demolitore BFG 9000"
