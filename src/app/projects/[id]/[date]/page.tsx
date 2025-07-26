@@ -727,25 +727,23 @@ const handleExportToPDF = async () => {
   }, [dailyLog, handleSave]);
   
   const handleRegisteredResourcesUpdate = async (updatedResources: RegisteredResource[]) => {
-      if (!project) return;
-      try {
-        await updateProject(project.id, { registeredResources: updatedResources });
-        setProject(prev => prev ? { ...prev, registeredResources: updatedResources } : null);
+    if (!project) return;
+    try {
+      await updateProject(project.id, { registeredResources: updatedResources });
+      // Update the local project state to immediately reflect changes
+      setProject(prev => prev ? { ...prev, registeredResources: updatedResources } : null);
+      toast({
+          title: "Anagrafica Aggiornata",
+          description: "L'elenco delle risorse è stato salvato.",
+      });
+    } catch (error) {
+        console.error("Failed to update registered resources:", error);
         toast({
-            title: "Anagrafica Aggiornata",
-            description: "L'elenco delle risorse è stato salvato.",
+            variant: "destructive",
+            title: "Errore",
+            description: "Impossibile aggiornare l'anagrafica.",
         });
-        // After updating the registered list, we might want to refresh everything
-        // to ensure consistency if any log entries were relying on this data.
-        await fetchData(project.id, dateString);
-      } catch (error) {
-          console.error("Failed to update registered resources:", error);
-          toast({
-              variant: "destructive",
-              title: "Errore",
-              description: "Impossibile aggiornare l'anagrafica.",
-          });
-      }
+    }
   };
 
 
