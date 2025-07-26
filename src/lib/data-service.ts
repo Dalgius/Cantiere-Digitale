@@ -215,7 +215,11 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
     const isLogEmpty = (logData.annotations || []).length === 0 && (logData.resources || []).length === 0;
 
     if (isLogEmpty) {
-        await deleteDoc(logRef);
+        try {
+            await deleteDoc(logRef);
+        } catch(e) {
+            // It might not exist, which is fine.
+        }
         return;
     }
     

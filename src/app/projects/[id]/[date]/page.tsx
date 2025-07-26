@@ -27,6 +27,7 @@ import html2canvas from 'html2canvas';
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
+import { RegisteredResourcesCard } from "@/components/log/registered-resources-card";
 
 
 function PageLoader() {
@@ -62,7 +63,10 @@ function PageLoader() {
 function ActionsCard({ onSave, onExport, isSaving, isExporting }: { onSave: () => void, onExport: () => void, isSaving: boolean, isExporting: boolean }) {
     return (
         <Card>
-            <CardContent className="space-y-2 p-4">
+            <CardHeader className="p-3">
+               <CardTitle className="font-headline text-lg">Azioni e Strumenti</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 p-3">
                 <Button onClick={onSave} className="w-full" disabled={isSaving || isExporting}>
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {isSaving ? 'Salvataggio...' : 'Salva Dati Giornata'}
@@ -721,6 +725,26 @@ const handleExportToPDF = async () => {
         await handleSave(updatedLog);
     }
   }, [dailyLog, handleSave]);
+  
+  const handleRegisteredResourcesUpdate = async (updatedResources: RegisteredResource[]) => {
+      if (!project) return;
+      try {
+        await updateProject(project.id, { registeredResources: updatedResources });
+        setProject(prev => prev ? { ...prev, registeredResources: updatedResources } : null);
+        toast({
+            title: "Anagrafica Aggiornata",
+            description: "L'elenco delle risorse è stato salvato.",
+        });
+      } catch (error) {
+          console.error("Failed to update registered resources:", error);
+          toast({
+              variant: "destructive",
+              title: "Errore",
+              description: "Impossibile aggiornare l'anagrafica.",
+          });
+      }
+  };
+
 
   if (isLoading || !project || !dailyLog) {
     return <PageLoader />;
@@ -753,6 +777,11 @@ const handleExportToPDF = async () => {
               </CardHeader>
              </Card>
             <DailyLogNav projectLogs={projectLogs} projectId={project.id} activeDate={dailyLog.date} />
+            <RegisteredResourcesCard 
+                projectId={project.id}
+                resources={project.registeredResources || []}
+                onResourcesUpdated={handleRegisteredResourcesUpdate}
+             />
              <div className="hidden lg:block">
                 <ActionsCard {...actionHandlers} />
              </div>
