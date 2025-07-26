@@ -63,10 +63,7 @@ function PageLoader() {
 function ActionsCard({ onSave, onExport, isSaving, isExporting }: { onSave: () => void, onExport: () => void, isSaving: boolean, isExporting: boolean }) {
     return (
         <Card>
-            <CardHeader>
-                <CardTitle className="font-headline text-lg">Azioni e Strumenti</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 p-4">
                 <Button onClick={onSave} className="w-full" disabled={isSaving || isExporting}>
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {isSaving ? 'Salvataggio...' : 'Salva Dati Giornata'}

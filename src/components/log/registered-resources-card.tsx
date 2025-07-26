@@ -110,9 +110,6 @@ export function RegisteredResourcesCard({ registeredResources, onUpdateResources
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="font-headline text-lg">Anagrafica</CardTitle>
-      </CardHeader>
       <CardContent className="space-y-4 max-h-60 overflow-y-auto p-4">
         {registeredResources.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">L'anagrafica è vuota. Aggiungi risorse dal log giornaliero.</p>
