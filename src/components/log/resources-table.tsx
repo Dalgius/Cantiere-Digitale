@@ -241,7 +241,7 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
               <TableHead>Tipo</TableHead>
               <TableHead>Descrizione</TableHead>
               <TableHead className="text-right">Q.tà</TableHead>
-              <TableHead className="w-[100px] text-center">Azioni</TableHead>
+              <TableHead className="w-[100px] text-right"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -258,7 +258,7 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
                     {resource.notes && <p className="text-xs text-muted-foreground font-normal italic">{resource.notes}</p>}
                 </TableCell>
                 <TableCell className="text-right">{resource.quantity}</TableCell>
-                <TableCell className="text-center">
+                <TableCell className="text-right">
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => handleOpenForm(resource)} disabled={isDisabled}>
                         <Pencil className="h-4 w-4" />
                     </Button>
