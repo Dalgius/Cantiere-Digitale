@@ -195,6 +195,16 @@ async function updateRegisteredResources(projectId: string, logData: Omit<DailyL
     }
 }
 
+export async function updateProject(id: string, data: Partial<Project>): Promise<void> {
+    try {
+        const projectRef = doc(db, 'projects', id);
+        await updateDoc(projectRef, data);
+    } catch (error) {
+        console.error(`Error updating project ${id}:`, error);
+        throw new Error("Impossibile aggiornare il progetto.");
+    }
+}
+
 
 export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'id'>): Promise<void> {
     const logId = new Date(logData.date).toISOString().split('T')[0];

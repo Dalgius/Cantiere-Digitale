@@ -36,7 +36,7 @@ export type Weather = {
   precipitation: 'Assenti' | 'Deboli' | 'Moderate' | 'Forti';
 };
 
-export type AnnotationType = 'Descrizione Lavori Svolti' | 'Istruzioni / Ordine di Servizio' | 'Osservazioni e Annotazioni' | 'Verbale di Constatazione' | 'Verbale di Accettazione Materiali' | 'Contestazione dell\'Impresa';
+export type AnnotationType = 'Descrizione Lavori Svolti' | 'Istruzioni / Ordine di Servizio' | 'Osservazioni e Annotazioni' | 'Verbale di Constatazione' | 'Verbale di Accettazione Materiali' | 'Contestazione dell'Impresa';
 
 export type Attachment = {
   id: string;
