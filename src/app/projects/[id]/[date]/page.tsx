@@ -27,7 +27,6 @@ import html2canvas from 'html2canvas';
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
-import { RegisteredResourcesCard } from "@/components/log/registered-resources-card";
 
 
 function PageLoader() {
@@ -723,29 +722,6 @@ const handleExportToPDF = async () => {
     }
   }, [dailyLog, handleSave]);
 
-  const handleUpdateRegisteredResources = useCallback(async (updatedResources: RegisteredResource[]) => {
-    if (!project) return;
-    
-    const updatedProject = { ...project, registeredResources: updatedResources };
-    setProject(updatedProject); // Optimistic update
-    
-    try {
-        await updateProject(project.id, { registeredResources: updatedResources });
-        toast({
-            title: "Anagrafica Aggiornata",
-            description: "L'elenco delle risorse è stato salvato.",
-        });
-    } catch (error) {
-        setProject(project); // Revert on failure
-        toast({
-            variant: "destructive",
-            title: "Errore",
-            description: "Impossibile aggiornare l'anagrafica delle risorse.",
-        });
-    }
-}, [project, toast]);
-
-
   if (isLoading || !project || !dailyLog) {
     return <PageLoader />;
   }
@@ -777,11 +753,6 @@ const handleExportToPDF = async () => {
               </CardHeader>
              </Card>
             <DailyLogNav projectLogs={projectLogs} projectId={project.id} activeDate={dailyLog.date} />
-            <RegisteredResourcesCard 
-                projectId={project.id}
-                registeredResources={project.registeredResources || []}
-                onUpdateResources={handleUpdateRegisteredResources}
-             />
              <div className="hidden lg:block">
                 <ActionsCard {...actionHandlers} />
              </div>
