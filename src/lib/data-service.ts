@@ -228,7 +228,7 @@ export async function updateProject(id: string, data: Partial<Project>): Promise
 }
 
 
-export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'id'>, existingRegistered: RegisteredResource[]): Promise<void> {
+export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'id'>, newRegisteredResources?: RegisteredResource[]): Promise<void> {
     const logId = new Date(logData.date).toISOString().split('T')[0];
     const logRef = doc(db, `projects/${projectId}/dailyLogs`, logId);
     
@@ -242,12 +242,11 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
         }
         return;
     }
-
-    const { modifiedAnagrafica, anagraficaWasModified } = await updateRegisteredResources(projectId, logData.resources, existingRegistered);
     
-    if (anagraficaWasModified) {
+    // Ensure newRegisteredResources is an array before updating the project
+    if (newRegisteredResources !== undefined) {
         await updateDoc(doc(db, 'projects', projectId), {
-            registeredResources: modifiedAnagrafica
+            registeredResources: newRegisteredResources
         });
     }
 

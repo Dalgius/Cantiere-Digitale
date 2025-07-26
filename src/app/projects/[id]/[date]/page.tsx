@@ -326,7 +326,7 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
                     padding: '10px 8px',
                     verticalAlign: 'top'
                   }}>
-                    <div>{resource.description}</div>
+                    <div>{resource.description} - <strong>{resource.name}</strong></div>
                     {resource.company && (
                       <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px' }}>
                         {resource.company}
@@ -477,13 +477,16 @@ export default function ProjectLogPage() {
     setIsSaving(true);
     try {
       const { id, ...dataToSave } = currentLog;
-      await saveDailyLog(projectId, dataToSave, newRegisteredResources ?? project.registeredResources ?? []);
+      await saveDailyLog(projectId, dataToSave, newRegisteredResources ?? project.registeredResources);
       toast({
         title: "Dati Salvati",
         description: "Le informazioni della giornata sono state salvate con successo.",
       });
-      // Force a refetch of all data to ensure we have the latest registered resources
-      await fetchData(projectId, dateString);
+      // Optional: refetch project if anagrafica might have changed
+      if (newRegisteredResources) {
+         const updatedProject = await getProject(projectId);
+         if (updatedProject) setProject(updatedProject);
+      }
     } catch (error) {
       console.error("Failed to save daily log:", error);
       toast({
@@ -494,7 +497,7 @@ export default function ProjectLogPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [dailyLog, projectId, project, toast, fetchData, dateString])
+  }, [dailyLog, projectId, project, toast])
 
 const handleExportToPDF = async () => {
   if (!project || !dailyLog) return;
