@@ -1,3 +1,4 @@
+
 // src/components/log/registered-resources-card.tsx
 'use client';
 

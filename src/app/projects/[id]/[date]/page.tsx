@@ -64,7 +64,7 @@ function ActionsCard({ onSave, onExport, isSaving, isExporting }: { onSave: () =
     return (
         <Card>
             <CardHeader className="p-3">
-               <CardTitle className="font-headline text-lg">Azioni e Strumenti</CardTitle>
+               <CardTitle className="font-headline text-lg">Azioni</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2 p-3">
                 <Button onClick={onSave} className="w-full" disabled={isSaving || isExporting}>
@@ -735,6 +735,9 @@ const handleExportToPDF = async () => {
             title: "Anagrafica Aggiornata",
             description: "L'elenco delle risorse è stato salvato.",
         });
+        // After updating the registered list, we might want to refresh everything
+        // to ensure consistency if any log entries were relying on this data.
+        await fetchData(project.id, dateString);
       } catch (error) {
           console.error("Failed to update registered resources:", error);
           toast({
