@@ -5,7 +5,7 @@ import type { Resource, ResourceType, RegisteredResource } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "../ui/button";
-import { Plus, Trash2, Send } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { Badge } from "../ui/badge";
 import {
   Dialog,
@@ -141,7 +141,7 @@ function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { o
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="company" className="text-right">Impresa</Label>
-            <Input id="company" name="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Es. Subappaltatore Srl" className="col-span-3" />
+            <Input id="company" name="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="(Opzionale)" className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="quantity" className="text-right">Quantità</Label>

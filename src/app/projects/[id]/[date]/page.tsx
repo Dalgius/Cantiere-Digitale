@@ -8,7 +8,7 @@ import { NewAnnotationForm } from "@/components/log/new-annotation-form";
 import { ResourcesTable } from "@/components/log/resources-table";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Save, Loader2, Building2, Trash2, Plus } from "lucide-react";
+import { Download, Save, Loader2 } from "lucide-react";
 import { notFound, useParams, useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useCallback, useRef, forwardRef } from "react";
