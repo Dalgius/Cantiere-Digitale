@@ -374,7 +374,7 @@ const PrintableLog = forwardRef<HTMLDivElement, { project: Project, log: DailyLo
         textAlign: 'center' 
       }}>
         <p style={{ margin: '0', fontWeight: '500' }}>
-          Cantiere Digitale - Documento generato il {format(new Date(), "d MMMM yyyy 'alle' HH:mm", { locale: it })}
+          DIGICANT - Documento generato il {format(new Date(), "d MMMM yyyy 'alle' HH:mm", { locale: it })}
         </p>
       </div>
     </div>
@@ -482,7 +482,7 @@ export default function ProjectLogPage() {
         title: "Dati Salvati",
         description: "Le informazioni della giornata sono state salvate con successo.",
       });
-      // Force a refetch of all data to ensure calendar is updated correctly
+      // Force a refetch of all data to ensure we have the latest registered resources
       await fetchData(projectId, dateString);
     } catch (error) {
       console.error("Failed to save daily log:", error);
@@ -797,7 +797,8 @@ const handleExportToPDF = async () => {
               </Card>
 
             <ResourcesTable 
-                resources={dailyLog.resources} 
+                resources={dailyLog.resources}
+                registeredResources={project.registeredResources || []} 
                 onAddResource={addResource} 
                 onRemoveResource={removeResource}
                 isDisabled={false} 

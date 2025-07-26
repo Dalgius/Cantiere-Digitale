@@ -1,16 +1,17 @@
+
 // src/lib/data-service.ts
 'use server';
 
 import { db, Timestamp } from '@/lib/firebase';
-import type { DailyLog, Project } from '@/lib/types';
-import { collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, query, where, orderBy, limit } from 'firebase/firestore';
+import type { DailyLog, Project, RegisteredResource } from '@/lib/types';
+import { collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, query, where, orderBy, limit, updateDoc, arrayUnion } from 'firebase/firestore';
 import { stakeholders } from './data';
 
 // Helper function to convert Firestore snapshots to Project objects
 function snapshotToProject(doc: any): Project {
     const data = doc.data();
-    // Explicitly exclude stakeholders to keep the dashboard payload light for list view
-    const { stakeholders, lastLogDate, ...rest } = data;
+    // Explicitly exclude fields that are not needed for the list view to keep it light.
+    const { stakeholders, lastLogDate, registeredResources, ...rest } = data;
     const project: Project = { id: doc.id, ...rest };
     if (lastLogDate instanceof Timestamp) {
         project.lastLogDate = lastLogDate.toDate();
@@ -152,6 +153,49 @@ export async function getDailyLog(projectId: string, date: string): Promise<Dail
     }
 }
 
+// Funzione per aggiornare l'anagrafica delle risorse
+async function updateRegisteredResources(projectId: string, logData: Omit<DailyLog, 'id'>) {
+    if (!logData.resources || logData.resources.length === 0) return;
+
+    const projectRef = doc(db, 'projects', projectId);
+    const projectSnap = await getDoc(projectRef);
+
+    if (!projectSnap.exists()) {
+        console.error(`Project ${projectId} not found for updating resources.`);
+        return;
+    }
+
+    const projectData = projectSnap.data() as Project;
+    const existingResources = projectData.registeredResources || [];
+    
+    // Crea un set di identificatori unici per le risorse esistenti per un controllo rapido
+    const existingResourceIds = new Set(existingResources.map(r => `${r.type}-${r.description}-${r.company || ''}`.toLowerCase()));
+
+    // Trova le nuove risorse da aggiungere
+    const newResourcesToAdd: RegisteredResource[] = [];
+    logData.resources.forEach(res => {
+        const resourceId = `${res.type}-${res.description}-${res.company || ''}`.toLowerCase();
+        if (!existingResourceIds.has(resourceId)) {
+            newResourcesToAdd.push({
+                id: `reg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                type: res.type,
+                description: res.description,
+                company: res.company,
+            });
+            // Aggiungi al set per evitare di aggiungere duplicati dalla stessa richiesta di log
+            existingResourceIds.add(resourceId);
+        }
+    });
+
+    // Se ci sono nuove risorse, aggiorna il documento del progetto
+    if (newResourcesToAdd.length > 0) {
+        await updateDoc(projectRef, {
+            registeredResources: arrayUnion(...newResourcesToAdd)
+        });
+    }
+}
+
+
 export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'id'>): Promise<void> {
     const logId = new Date(logData.date).toISOString().split('T')[0];
     const logRef = doc(db, `projects/${projectId}/dailyLogs`, logId);
@@ -161,8 +205,6 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
 
     if (isLogEmpty) {
         await deleteDoc(logRef);
-        // We don't update lastLogDate here, as it should reflect the last *existing* log.
-        // A more robust solution might involve finding the new latest log. For now, this is sufficient.
         return;
     }
     
@@ -178,19 +220,22 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
 
     await setDoc(logRef, logToSave, { merge: true });
 
-    // Also update the lastLogDate on the project document
-    const projectRef = doc(db, 'projects', projectId);
-    await setDoc(projectRef, { lastLogDate: logToSave.date }, { merge: true });
+    // Update registered resources and last log date in parallel
+    await Promise.all([
+        updateDoc(doc(db, 'projects', projectId), { lastLogDate: logToSave.date }),
+        updateRegisteredResources(projectId, logData)
+    ]);
 }
 
 
-export async function addProject(projectData: Omit<Project, 'id' | 'stakeholders' | 'ownerId' | 'lastLogDate'>, ownerId: string): Promise<Project> {
+export async function addProject(projectData: Omit<Project, 'id' | 'stakeholders' | 'ownerId' | 'lastLogDate' | 'registeredResources'>, ownerId: string): Promise<Project> {
     const projectsCol = collection(db, 'projects');
     
     const projectToAdd = {
         ...projectData,
         ownerId: ownerId, // Track who owns the project
-        stakeholders: Object.values(stakeholders) // Add default stakeholders on creation
+        stakeholders: Object.values(stakeholders), // Add default stakeholders on creation
+        registeredResources: [], // Initialize with an empty array
     };
     
     const docRef = await addDoc(projectsCol, projectToAdd);

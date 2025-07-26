@@ -1,10 +1,21 @@
 
+
 export type UserRole = 'Direttore dei Lavori (DL)' | 'Responsabile del Procedimento (RUP)' | 'Coordinatore per la Sicurezza (CSE)' | 'Impresa Esecutrice' | 'Assistente del DL';
 
 export type Stakeholder = {
   id: string;
   name: string;
   role: UserRole;
+};
+
+export type ResourceType = 'Manodopera' | 'Macchinario/Mezzo';
+
+// NUOVO TIPO per la risorsa in anagrafica
+export type RegisteredResource = {
+  id: string; // ID unico per la risorsa
+  type: ResourceType; // 'Manodopera' o 'Macchinario/Mezzo'
+  description: string; // Es. "Operaio Specializzato" o "Martello Demolitore"
+  company?: string; // Impresa di appartenenza (opzionale)
 };
 
 export type Project = {
@@ -16,6 +27,7 @@ export type Project = {
   stakeholders: Stakeholder[];
   ownerId: string; // The UID of the user who created the project
   lastLogDate?: Date; // The date of the most recent log entry
+  registeredResources?: RegisteredResource[]; // NUOVO CAMPO: elenco delle risorse pre-registrate
 };
 
 export type Weather = {
@@ -42,8 +54,6 @@ export type Annotation = {
   attachments: Attachment[];
   isSigned: boolean;
 };
-
-export type ResourceType = 'Manodopera' | 'Macchinario/Mezzo';
 
 export type Resource = {
   id: string;

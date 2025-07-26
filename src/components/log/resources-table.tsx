@@ -1,7 +1,7 @@
 
 'use client';
 
-import type { Resource, ResourceType } from "@/lib/types";
+import type { Resource, ResourceType, RegisteredResource } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "../ui/button";
@@ -20,19 +20,20 @@ import {
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "../ui/separator";
 
 interface ResourcesTableProps {
   resources: Resource[];
+  registeredResources: RegisteredResource[];
   onAddResource: (resource: Omit<Resource, 'id'>) => void;
   onRemoveResource: (resourceId: string) => void;
   isDisabled: boolean;
 }
 
-function NewResourceForm({ onAddResource, isDisabled }: { onAddResource: ResourcesTableProps['onAddResource'], isDisabled: boolean }) {
+function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { onAddResource: ResourcesTableProps['onAddResource'], isDisabled: boolean, registeredResources: RegisteredResource[] }) {
   const [isOpen, setIsOpen] = useState(false);
   const [type, setType] = useState<ResourceType | ''>('');
   const [description, setDescription] = useState('');
@@ -40,6 +41,23 @@ function NewResourceForm({ onAddResource, isDisabled }: { onAddResource: Resourc
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
   const { toast } = useToast();
+
+  const resetForm = () => {
+    setType('');
+    setDescription('');
+    setCompany('');
+    setQuantity(1);
+    setNotes('');
+  };
+
+  const handleSelectRegisteredResource = (resourceId: string) => {
+    const selected = registeredResources.find(r => r.id === resourceId);
+    if (selected) {
+      setType(selected.type);
+      setDescription(selected.description);
+      setCompany(selected.company || '');
+    }
+  };
 
   const handleAddResource = () => {
     if (!type || !description.trim() || quantity <= 0) {
@@ -59,14 +77,16 @@ function NewResourceForm({ onAddResource, isDisabled }: { onAddResource: Resourc
       notes,
     });
     
-    // Reset form and close dialog
     setIsOpen(false);
-    setType('');
-    setDescription('');
-    setCompany('');
-    setQuantity(1);
-    setNotes('');
+    resetForm();
   }
+
+  // Reset form state when dialog is closed
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -80,10 +100,29 @@ function NewResourceForm({ onAddResource, isDisabled }: { onAddResource: Resourc
         <DialogHeader>
           <DialogTitle>Aggiungi Risorsa</DialogTitle>
           <DialogDescription>
-            Registra una nuova risorsa impiegata nel cantiere per la data odierna.
+            Scegli una risorsa dall'anagrafica o inseriscine una nuova. Verrà salvata per usi futuri.
           </DialogDescription>
         </DialogHeader>
         <fieldset disabled={isDisabled} className="grid gap-4 py-4">
+          
+           {registeredResources.length > 0 && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="registered-resource" className="text-right">Da Anagrafica</Label>
+               <Select name="registered-resource-select" onValueChange={handleSelectRegisteredResource}>
+                  <SelectTrigger id="registered-resource" className="col-span-3">
+                      <SelectValue placeholder="Scegli risorsa..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {registeredResources.map(res => (
+                         <SelectItem key={res.id} value={res.id}>
+                            {res.description} {res.company ? `(${res.company})` : ''}
+                         </SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+            </div>
+           )}
+
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="type" className="text-right">Tipo</Label>
             <Select name="resource-type" id="resource-type" value={type} onValueChange={(v) => setType(v as ResourceType)}>
@@ -124,7 +163,7 @@ function NewResourceForm({ onAddResource, isDisabled }: { onAddResource: Resourc
   )
 }
 
-export function ResourcesTable({ resources, onAddResource, onRemoveResource, isDisabled }: ResourcesTableProps) {
+export function ResourcesTable({ resources, registeredResources, onAddResource, onRemoveResource, isDisabled }: ResourcesTableProps) {
   return (
     <Card className={isDisabled ? 'opacity-70 bg-secondary/30' : ''}>
       <CardHeader className="flex flex-row items-center justify-between bg-primary text-primary-foreground border-b p-3">
@@ -170,7 +209,7 @@ export function ResourcesTable({ resources, onAddResource, onRemoveResource, isD
       </CardContent>
        <Separator />
        <CardFooter className="p-4 flex justify-end">
-          <NewResourceForm onAddResource={onAddResource} isDisabled={isDisabled} />
+          <NewResourceForm onAddResource={onAddResource} isDisabled={isDisabled} registeredResources={registeredResources} />
        </CardFooter>
     </Card>
   );
