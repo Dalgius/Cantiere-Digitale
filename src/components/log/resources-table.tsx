@@ -141,7 +141,7 @@ function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { o
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Descrizione</Label>
-            <Input id="description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" placeholder='Es. "Operaio Specializzato"' />
+            <Input id="description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" placeholder='Es. "Operaio Specializzato o Escavatore"' />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="name" className="text-right">Nome/Modello</Label>
