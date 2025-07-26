@@ -111,8 +111,7 @@ export function RegisteredResourcesCard({ registeredResources, onUpdateResources
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline text-lg">Anagrafica Risorse</CardTitle>
-        <CardDescription>Gestisci le risorse riutilizzabili per questo progetto.</CardDescription>
+        <CardTitle className="font-headline text-lg">Anagrafica</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 max-h-60 overflow-y-auto p-4">
         {registeredResources.length === 0 ? (
