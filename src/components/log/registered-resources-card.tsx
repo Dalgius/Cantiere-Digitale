@@ -23,22 +23,24 @@ function NewResourceDialog({ onAddResource }: { onAddResource: (resource: Omit<R
   const [isOpen, setIsOpen] = useState(false);
   const [type, setType] = useState<ResourceType | ''>('');
   const [description, setDescription] = useState('');
+  const [name, setName] = useState('');
   const [company, setCompany] = useState('');
   const { toast } = useToast();
 
   const handleAdd = () => {
-    if (!type || !description.trim()) {
+    if (!type || !description.trim() || !name.trim()) {
       toast({
         variant: 'destructive',
         title: 'Campi obbligatori',
-        description: 'Tipo e descrizione sono richiesti.',
+        description: 'Tipo, descrizione e nome/modello sono richiesti.',
       });
       return;
     }
-    onAddResource({ type, description, company });
+    onAddResource({ type, description, name, company });
     setIsOpen(false);
     setType('');
     setDescription('');
+    setName('');
     setCompany('');
   };
 
@@ -73,6 +75,10 @@ function NewResourceDialog({ onAddResource }: { onAddResource: (resource: Omit<R
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Descrizione</Label>
             <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" placeholder='Es. "Operaio Specializzato"' />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">Nome/Modello</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" placeholder='Es. "Mario Rossi" o "CAT 320"' />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="company" className="text-right">Impresa</Label>
@@ -121,8 +127,8 @@ export function RegisteredResourcesCard({ registeredResources, onUpdateResources
                 <div className="space-y-1">
                   {manpower.map(resource => (
                     <div key={resource.id} className="flex items-center justify-between text-sm group">
-                      <span className="truncate" title={`${resource.description} ${resource.company ? `(${resource.company})` : ''}`}>
-                        {resource.description} {resource.company && <span className="text-xs text-muted-foreground">({resource.company})</span>}
+                      <span className="truncate" title={`${resource.description} - ${resource.name} ${resource.company ? `(${resource.company})` : ''}`}>
+                        {resource.description} - <strong>{resource.name}</strong> {resource.company && <span className="text-xs text-muted-foreground">({resource.company})</span>}
                       </span>
                       <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleRemoveResource(resource.id)}>
                         <Trash2 className="h-3 w-3 text-destructive" />
@@ -138,8 +144,8 @@ export function RegisteredResourcesCard({ registeredResources, onUpdateResources
                 <div className="space-y-1">
                   {equipment.map(resource => (
                     <div key={resource.id} className="flex items-center justify-between text-sm group">
-                      <span className="truncate" title={resource.description}>
-                        {resource.description} {resource.company && <span className="text-xs text-muted-foreground">({resource.company})</span>}
+                      <span className="truncate" title={`${resource.description} - ${resource.name} ${resource.company ? `(${resource.company})` : ''}`}>
+                        {resource.description} - <strong>{resource.name}</strong> {resource.company && <span className="text-xs text-muted-foreground">({resource.company})</span>}
                         </span>
                       <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={() => handleRemoveResource(resource.id)}>
                         <Trash2 className="h-3 w-3 text-destructive" />

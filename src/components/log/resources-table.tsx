@@ -37,6 +37,7 @@ function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { o
   const [isOpen, setIsOpen] = useState(false);
   const [type, setType] = useState<ResourceType | ''>('');
   const [description, setDescription] = useState('');
+  const [name, setName] = useState('');
   const [company, setCompany] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState('');
@@ -45,6 +46,7 @@ function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { o
   const resetForm = () => {
     setType('');
     setDescription('');
+    setName('');
     setCompany('');
     setQuantity(1);
     setNotes('');
@@ -55,16 +57,17 @@ function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { o
     if (selected) {
       setType(selected.type);
       setDescription(selected.description);
+      setName(selected.name);
       setCompany(selected.company || '');
     }
   };
 
   const handleAddResource = () => {
-    if (!type || !description.trim() || quantity <= 0) {
+    if (!type || !description.trim() || !name.trim() || quantity <= 0) {
       toast({
         variant: 'destructive',
         title: 'Campi obbligatori',
-        description: 'Per favore, compila tutti i campi richiesti per aggiungere una risorsa.',
+        description: 'Tipo, descrizione, nome/modello e quantità sono richiesti.',
       });
       return;
     }
@@ -72,6 +75,7 @@ function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { o
     onAddResource({
       type: type as ResourceType,
       description,
+      name,
       company,
       quantity,
       notes,
@@ -115,7 +119,7 @@ function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { o
                   <SelectContent>
                       {registeredResources.map(res => (
                          <SelectItem key={res.id} value={res.id}>
-                            {res.description} {res.company ? `(${res.company})` : ''}
+                            {res.description} - {res.name} {res.company ? `(${res.company})` : ''}
                          </SelectItem>
                       ))}
                   </SelectContent>
@@ -137,7 +141,11 @@ function NewResourceForm({ onAddResource, isDisabled, registeredResources }: { o
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="description" className="text-right">Descrizione</Label>
-            <Input id="description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
+            <Input id="description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" placeholder='Es. "Operaio Specializzato"' />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="name" className="text-right">Nome/Modello</Label>
+            <Input id="name" name="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" placeholder='Es. "Mario Rossi" o "CAT 320"'/>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="company" className="text-right">Impresa</Label>
@@ -188,7 +196,7 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
                   </Badge>
                 </TableCell>
                 <TableCell className="font-medium">
-                    {resource.description}
+                    <div>{resource.description} - <strong>{resource.name}</strong></div>
                     {resource.company && <p className="text-xs text-muted-foreground font-normal">{resource.company}</p>}
                     {resource.notes && <p className="text-xs text-muted-foreground font-normal italic">{resource.notes}</p>}
                 </TableCell>

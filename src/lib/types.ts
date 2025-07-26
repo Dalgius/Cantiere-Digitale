@@ -14,7 +14,8 @@ export type ResourceType = 'Manodopera' | 'Macchinario/Mezzo';
 export type RegisteredResource = {
   id: string; // ID unico per la risorsa
   type: ResourceType; // 'Manodopera' o 'Macchinario/Mezzo'
-  description: string; // Es. "Operaio Specializzato" o "Martello Demolitore"
+  description: string; // Es. "Operaio Specializzato"
+  name: string; // Es. "Mario Rossi" o "Martello Demolitore BFG 9000"
   company?: string; // Impresa di appartenenza (opzionale)
 };
 
@@ -58,11 +59,11 @@ export type Annotation = {
 export type Resource = {
   id: string;
   type: ResourceType;
-  description: string;
+  description: string; // Es. "Operaio Specializzato"
+  name: string; // Es. "Mario Rossi" o "Martello Demolitore BFG 9000"
   quantity: number;
   notes?: string;
   company?: string;
-  hours?: number;
 };
 
 export type DailyLog = {

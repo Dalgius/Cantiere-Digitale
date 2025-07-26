@@ -169,17 +169,18 @@ async function updateRegisteredResources(projectId: string, logData: Omit<DailyL
     const existingResources = projectData.registeredResources || [];
     
     // Crea un set di identificatori unici per le risorse esistenti per un controllo rapido
-    const existingResourceIds = new Set(existingResources.map(r => `${r.type}-${r.description}-${r.company || ''}`.toLowerCase()));
+    const existingResourceIds = new Set(existingResources.map(r => `${r.type}-${r.description}-${r.name}-${r.company || ''}`.toLowerCase()));
 
     // Trova le nuove risorse da aggiungere
     const newResourcesToAdd: RegisteredResource[] = [];
     logData.resources.forEach(res => {
-        const resourceId = `${res.type}-${res.description}-${res.company || ''}`.toLowerCase();
+        const resourceId = `${res.type}-${res.description}-${res.name}-${res.company || ''}`.toLowerCase();
         if (!existingResourceIds.has(resourceId)) {
             newResourcesToAdd.push({
                 id: `reg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 type: res.type,
                 description: res.description,
+                name: res.name,
                 company: res.company,
             });
             // Aggiungi al set per evitare di aggiungere duplicati dalla stessa richiesta di log
