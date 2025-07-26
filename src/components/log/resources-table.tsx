@@ -14,9 +14,17 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogTrigger,
-  DialogClose,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
@@ -30,7 +38,7 @@ interface ResourcesTableProps {
   registeredResources: RegisteredResource[];
   onAddResource: (resource: Omit<Resource, 'id'>) => void;
   onUpdateResource: (resource: Resource) => void;
-  onRemoveResource: (resourceId: string) => void;
+  onRemoveResource: (resourceId: string, removeFromAnagrafica: boolean) => void;
   isDisabled: boolean;
 }
 
@@ -190,6 +198,7 @@ function ResourceForm({ resource, onSave, onClose, registeredResources }: Resour
 export function ResourcesTable({ resources, registeredResources, onAddResource, onUpdateResource, onRemoveResource, isDisabled }: ResourcesTableProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
+  const [resourceToDelete, setResourceToDelete] = useState<Resource | null>(null);
 
   const handleOpenForm = (resource: Resource | null = null) => {
     setEditingResource(resource);
@@ -207,6 +216,17 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
     } else {
       onAddResource(resourceData);
     }
+  }
+
+  const handleDeleteRequest = (resource: Resource) => {
+    setResourceToDelete(resource);
+  }
+  
+  const handleConfirmDelete = (fromAnagrafica: boolean) => {
+    if (resourceToDelete) {
+      onRemoveResource(resourceToDelete.id, fromAnagrafica);
+    }
+    setResourceToDelete(null);
   }
 
   return (
@@ -242,7 +262,7 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => handleOpenForm(resource)} disabled={isDisabled}>
                         <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => onRemoveResource(resource.id)} disabled={isDisabled}>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleDeleteRequest(resource)} disabled={isDisabled}>
                         <Trash2 className="h-4 w-4" />
                     </Button>
                 </TableCell>
@@ -273,8 +293,31 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
             />
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!resourceToDelete} onOpenChange={() => setResourceToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Conferma Eliminazione Risorsa</AlertDialogTitle>
+            <AlertDialogDescription>
+              Vuoi eliminare la risorsa <span className="font-bold">"{resourceToDelete?.description} - {resourceToDelete?.name}"</span> solo da questo log giornaliero, o anche dall'anagrafica del progetto?
+              <br/><br/>
+              <span className="text-destructive">L'eliminazione dall'anagrafica è permanente.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel onClick={() => setResourceToDelete(null)}>Annulla</AlertDialogCancel>
+            <Button variant="outline" onClick={() => handleConfirmDelete(false)}>
+              Elimina solo da oggi
+            </Button>
+            <AlertDialogAction 
+              onClick={() => handleConfirmDelete(true)} 
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Elimina anche da Anagrafica
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
-
-    

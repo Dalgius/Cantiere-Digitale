@@ -470,14 +470,14 @@ export default function ProjectLogPage() {
     }
   }, [projectId, dateString, fetchData]);
   
-  const handleSave = useCallback(async (logToSave?: DailyLog) => {
+  const handleSave = useCallback(async (logToSave?: DailyLog, newRegisteredResources?: RegisteredResource[]) => {
     const currentLog = logToSave || dailyLog;
     if (!currentLog || !projectId || !project) return;
     
     setIsSaving(true);
     try {
       const { id, ...dataToSave } = currentLog;
-      await saveDailyLog(projectId, dataToSave, project.registeredResources || []);
+      await saveDailyLog(projectId, dataToSave, newRegisteredResources ?? project.registeredResources ?? []);
       toast({
         title: "Dati Salvati",
         description: "Le informazioni della giornata sono state salvate con successo.",
@@ -681,6 +681,8 @@ const handleExportToPDF = async () => {
   }, []);
 
   const updateResource = useCallback((updatedResource: Resource) => {
+    let newRegisteredResources: RegisteredResource[] | undefined;
+
     setDailyLog(prevLog => {
       if (!prevLog) return null;
       return {
@@ -688,8 +690,9 @@ const handleExportToPDF = async () => {
         resources: prevLog.resources.map(r => r.id === updatedResource.id ? updatedResource : r),
       };
     });
-     if (project && updatedResource.registeredResourceId) {
-        const updatedRegisteredResources = (project.registeredResources || []).map(rr => 
+
+    if (project && updatedResource.registeredResourceId) {
+        const updatedAnagrafica = (project.registeredResources || []).map(rr => 
             rr.id === updatedResource.registeredResourceId 
             ? {
                 id: rr.id,
@@ -700,9 +703,19 @@ const handleExportToPDF = async () => {
               }
             : rr
         );
-        setProject({...project, registeredResources: updatedRegisteredResources});
+        newRegisteredResources = updatedAnagrafica;
+        setProject({...project, registeredResources: updatedAnagrafica});
     }
-  }, [project]);
+
+    // Qui salviamo subito il log per persistere la modifica anche in anagrafica
+    if(dailyLog) {
+        const logWithUpdatedResource = {
+            ...dailyLog,
+            resources: dailyLog.resources.map(r => r.id === updatedResource.id ? updatedResource : r),
+        }
+        handleSave(logWithUpdatedResource, newRegisteredResources);
+    }
+  }, [project, dailyLog, handleSave]);
 
 
   const removeAnnotation = useCallback(async (annotationId: string) => {
@@ -736,19 +749,28 @@ const handleExportToPDF = async () => {
     }
   }, [dailyLog, toast, handleSave]);
 
-  const removeResource = useCallback(async (resourceId: string) => {
-    if (!dailyLog) return;
+  const handleRemoveResource = useCallback(async (resourceId: string, removeFromAnagrafica: boolean) => {
+    if (!dailyLog || !project) return;
     
+    const resourceToRemove = dailyLog.resources.find(r => r.id === resourceId);
+    if (!resourceToRemove) return;
+
     const updatedLog = {
         ...dailyLog,
         resources: dailyLog.resources.filter(r => r.id !== resourceId),
     };
     setDailyLog(updatedLog);
     
-    if (updatedLog.annotations.length === 0 && updatedLog.resources.length === 0) {
-        await handleSave(updatedLog);
+    let updatedAnagrafica = project.registeredResources || [];
+    if (removeFromAnagrafica && resourceToRemove.registeredResourceId) {
+        updatedAnagrafica = updatedAnagrafica.filter(rr => rr.id !== resourceToRemove.registeredResourceId);
+        setProject({...project, registeredResources: updatedAnagrafica });
     }
-  }, [dailyLog, handleSave]);
+
+    // Save immediately to persist changes
+    await handleSave(updatedLog, updatedAnagrafica);
+
+  }, [dailyLog, project, handleSave]);
 
 
   if (isLoading || !project || !dailyLog) {
@@ -826,7 +848,7 @@ const handleExportToPDF = async () => {
                 registeredResources={project.registeredResources || []} 
                 onAddResource={addResource} 
                 onUpdateResource={updateResource}
-                onRemoveResource={removeResource}
+                onRemoveResource={handleRemoveResource}
                 isDisabled={false} 
             />
 
@@ -841,5 +863,3 @@ const handleExportToPDF = async () => {
     </div>
   );
 }
-
-    

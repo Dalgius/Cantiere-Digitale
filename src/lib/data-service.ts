@@ -155,7 +155,7 @@ export async function getDailyLog(projectId: string, date: string): Promise<Dail
 
 // Funzione per aggiornare l'anagrafica delle risorse
 async function updateRegisteredResources(projectId: string, resources: Resource[], existingRegistered: RegisteredResource[]) {
-    if (!resources || resources.length === 0) return;
+    if (!resources || resources.length === 0) return { modifiedAnagrafica: existingRegistered, anagraficaWasModified: false };
 
     const projectRef = doc(db, 'projects', projectId);
     
@@ -164,20 +164,33 @@ async function updateRegisteredResources(projectId: string, resources: Resource[
     let anagraficaWasModified = false;
 
     resources.forEach(res => {
-        if (res.registeredResourceId) {
-            // This resource is already in the anagrafica, check if it needs an update.
-            const index = currentAnagrafica.findIndex(rr => rr.id === res.registeredResourceId);
+        let anagraficaRes = res.registeredResourceId ? currentAnagrafica.find(rr => rr.id === res.registeredResourceId) : undefined;
+        
+        // Find by content if ID is missing (for new resources added in this session)
+        if (!anagraficaRes) {
+            anagraficaRes = currentAnagrafica.find(rr => 
+                rr.name === res.name && 
+                rr.description === res.description && 
+                rr.type === res.type && 
+                rr.company === res.company
+            );
+            if (anagraficaRes) {
+                res.registeredResourceId = anagraficaRes.id;
+            }
+        }
+        
+        if (anagraficaRes) {
+            // This resource is in the anagrafica, check if it needs an update.
+            const index = currentAnagrafica.findIndex(rr => rr.id === anagraficaRes!.id);
             if (index !== -1) {
-                const anagraficaRes = currentAnagrafica[index];
-                // Check if any field is different
-                if (anagraficaRes.description !== res.description ||
-                    anagraficaRes.name !== res.name ||
-                    anagraficaRes.company !== res.company ||
-                    anagraficaRes.type !== res.type)
+                const existingAnagraficaRes = currentAnagrafica[index];
+                if (existingAnagraficaRes.description !== res.description ||
+                    existingAnagraficaRes.name !== res.name ||
+                    existingAnagraficaRes.company !== res.company ||
+                    existingAnagraficaRes.type !== res.type)
                 {
-                    // Update the local copy
                     currentAnagrafica[index] = {
-                        id: anagraficaRes.id,
+                        id: existingAnagraficaRes.id,
                         type: res.type,
                         description: res.description,
                         name: res.name,
@@ -196,19 +209,12 @@ async function updateRegisteredResources(projectId: string, resources: Resource[
                 company: res.company,
              };
              currentAnagrafica.push(newRegisteredResource);
-             // We also need to give the resource in the log its new ID
              res.registeredResourceId = newRegisteredResource.id;
              anagraficaWasModified = true;
         }
     });
 
-
-    // If the anagrafica has changed, update it in Firestore
-    if (anagraficaWasModified) {
-         await updateDoc(projectRef, {
-            registeredResources: currentAnagrafica
-        });
-    }
+    return { modifiedAnagrafica: currentAnagrafica, anagraficaWasModified };
 }
 
 export async function updateProject(id: string, data: Partial<Project>): Promise<void> {
@@ -226,7 +232,6 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
     const logId = new Date(logData.date).toISOString().split('T')[0];
     const logRef = doc(db, `projects/${projectId}/dailyLogs`, logId);
     
-    // If the log is empty (no annotations and no resources), delete it.
     const isLogEmpty = (logData.annotations || []).length === 0 && (logData.resources || []).length === 0;
 
     if (isLogEmpty) {
@@ -238,10 +243,14 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
         return;
     }
 
-    // First, sync the anagrafica. This function will mutate logData.resources to add new IDs.
-    await updateRegisteredResources(projectId, logData.resources, existingRegistered);
+    const { modifiedAnagrafica, anagraficaWasModified } = await updateRegisteredResources(projectId, logData.resources, existingRegistered);
     
-    // Create a safe, serializable object for Firestore
+    if (anagraficaWasModified) {
+        await updateDoc(doc(db, 'projects', projectId), {
+            registeredResources: modifiedAnagrafica
+        });
+    }
+
     const logToSave = {
       ...logData,
       date: Timestamp.fromDate(new Date(logData.date)),
@@ -249,12 +258,10 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
         ...anno,
         timestamp: anno.timestamp ? Timestamp.fromDate(new Date(anno.timestamp)) : Timestamp.now(),
       })),
-      resources: logData.resources, // Now contains the updated registeredResourceIds
+      resources: logData.resources,
     };
 
     await setDoc(logRef, logToSave, { merge: true });
-
-    // Update last log date
     await updateDoc(doc(db, 'projects', projectId), { lastLogDate: logToSave.date });
 }
 
@@ -282,5 +289,3 @@ export async function deleteProject(projectId: string): Promise<void> {
     // Note: This doesn't delete subcollections. A Cloud Function would be needed for that in production.
     await deleteDoc(projectRef);
 }
-
-    
