@@ -4,7 +4,7 @@
 
 import { db, Timestamp } from '@/lib/firebase';
 import type { DailyLog, Project, RegisteredResource, Resource } from '@/lib/types';
-import { collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, query, where, orderBy, limit, updateDoc, arrayUnion } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, query, where, orderBy, limit, updateDoc, arrayUnion, writeBatch, arrayRemove } from 'firebase/firestore';
 import { stakeholders } from './data';
 
 // Helper function to convert Firestore snapshots to Project objects
@@ -288,4 +288,45 @@ export async function deleteProject(projectId: string): Promise<void> {
     const projectRef = doc(db, 'projects', projectId);
     // Note: This doesn't delete subcollections. A Cloud Function would be needed for that in production.
     await deleteDoc(projectRef);
+}
+
+/**
+ * Deletes a registered resource from the project's anagrafica and removes it from all daily logs.
+ * @param projectId The ID of the project.
+ * @param registeredResourceId The ID of the resource to delete from the anagrafica.
+ */
+export async function deleteResourceFromAnagraficaAndLogs(projectId: string, registeredResourceId: string): Promise<void> {
+    const projectRef = doc(db, 'projects', projectId);
+    const logsColRef = collection(db, `projects/${projectId}/dailyLogs`);
+    
+    const batch = writeBatch(db);
+
+    // 1. Scan all daily logs and remove the resource if it exists
+    const logsSnapshot = await getDocs(logsColRef);
+    logsSnapshot.forEach(logDoc => {
+        const logData = logDoc.data() as DailyLog;
+        const resources = logData.resources || [];
+        
+        const updatedResources = resources.filter(res => res.registeredResourceId !== registeredResourceId);
+
+        // If the resources array has changed, update the document
+        if (updatedResources.length < resources.length) {
+            const logRef = doc(db, `projects/${projectId}/dailyLogs`, logDoc.id);
+            batch.update(logRef, { resources: updatedResources });
+        }
+    });
+
+    // 2. Remove the resource from the project's anagrafica array
+    // Firestore's arrayRemove can't be used with an object, so we need to fetch, filter, and update.
+    const projectSnap = await getDoc(projectRef);
+    if (projectSnap.exists()) {
+        const projectData = projectSnap.data() as Project;
+        const currentAnagrafica = projectData.registeredResources || [];
+        const updatedAnagrafica = currentAnagrafica.filter(res => res.id !== registeredResourceId);
+        
+        batch.update(projectRef, { registeredResources: updatedAnagrafica });
+    }
+
+    // 3. Commit all batched writes
+    await batch.commit();
 }

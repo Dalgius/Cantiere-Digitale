@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useCallback, useRef, forwardRef } from "react";
 import { createPortal } from 'react-dom';
 import type { DailyLog, Project, Annotation, Resource, Stakeholder, Attachment, RegisteredResource } from "@/lib/types";
-import { getDailyLog, getProject, getDailyLogsForProject, saveDailyLog, updateProject } from "@/lib/data-service";
+import { getDailyLog, getProject, getDailyLogsForProject, saveDailyLog, updateProject, deleteResourceFromAnagraficaAndLogs } from "@/lib/data-service";
 import { deleteFileFromStorage } from "@/lib/storage-service";
 import { storage } from "@/lib/firebase";
 import { ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -673,49 +673,79 @@ const handleExportToPDF = async () => {
         id: `res-local-${Date.now()}`,
         ...resourceData,
       };
-      return {
+      
+      const updatedLog = {
         ...prevLog,
         resources: [...prevLog.resources, newResource],
       };
+      
+      // If adding a new resource, update the project anagrafica too
+      const updatedProjectAnagrafica = [...(project?.registeredResources || [])];
+      if (!resourceData.registeredResourceId) {
+          const newAnagraficaResource = {
+              id: `reg-${Date.now()}`,
+              type: resourceData.type,
+              description: resourceData.description,
+              name: resourceData.name,
+              company: resourceData.company,
+          };
+          updatedProjectAnagrafica.push(newAnagraficaResource);
+          newResource.registeredResourceId = newAnagraficaResource.id;
+      }
+
+      setProject(prevProject => prevProject ? {...prevProject, registeredResources: updatedProjectAnagrafica} : null);
+
+      return updatedLog;
     });
-  }, []);
+  }, [project]);
 
   const updateResource = useCallback((updatedResource: Resource) => {
     let newRegisteredResources: RegisteredResource[] | undefined;
 
     setDailyLog(prevLog => {
       if (!prevLog) return null;
-      return {
+      
+      const updatedLog = {
         ...prevLog,
         resources: prevLog.resources.map(r => r.id === updatedResource.id ? updatedResource : r),
       };
-    });
 
-    if (project && updatedResource.registeredResourceId) {
-        const updatedAnagrafica = (project.registeredResources || []).map(rr => 
-            rr.id === updatedResource.registeredResourceId 
-            ? {
-                id: rr.id,
+      if (project && updatedResource.registeredResourceId) {
+          const resourceExistsInAnagrafica = (project.registeredResources || []).some(rr => rr.id === updatedResource.registeredResourceId);
+          
+          if (resourceExistsInAnagrafica) {
+            newRegisteredResources = (project.registeredResources || []).map(rr => 
+              rr.id === updatedResource.registeredResourceId 
+              ? {
+                  id: rr.id,
+                  type: updatedResource.type,
+                  description: updatedResource.description,
+                  name: updatedResource.name,
+                  company: updatedResource.company
+                }
+              : rr
+            );
+          } else {
+             const newAnagraficaResource: RegisteredResource = {
+                id: updatedResource.registeredResourceId!,
                 type: updatedResource.type,
                 description: updatedResource.description,
                 name: updatedResource.name,
-                company: updatedResource.company
-              }
-            : rr
-        );
-        newRegisteredResources = updatedAnagrafica;
-        setProject({...project, registeredResources: updatedAnagrafica});
-    }
+                company: updatedResource.company,
+             }
+             newRegisteredResources = [...(project.registeredResources || []), newAnagraficaResource];
+          }
 
-    // Qui salviamo subito il log per persistere la modifica anche in anagrafica
-    if(dailyLog) {
-        const logWithUpdatedResource = {
-            ...dailyLog,
-            resources: dailyLog.resources.map(r => r.id === updatedResource.id ? updatedResource : r),
-        }
-        handleSave(logWithUpdatedResource, newRegisteredResources);
-    }
-  }, [project, dailyLog, handleSave]);
+          setProject({...project, registeredResources: newRegisteredResources});
+          handleSave(updatedLog, newRegisteredResources);
+      } else {
+         handleSave(updatedLog, project?.registeredResources);
+      }
+      
+      return updatedLog;
+    });
+
+  }, [project, handleSave]);
 
 
   const removeAnnotation = useCallback(async (annotationId: string) => {
@@ -755,22 +785,32 @@ const handleExportToPDF = async () => {
     const resourceToRemove = dailyLog.resources.find(r => r.id === resourceId);
     if (!resourceToRemove) return;
 
-    const updatedLog = {
-        ...dailyLog,
-        resources: dailyLog.resources.filter(r => r.id !== resourceId),
-    };
-    setDailyLog(updatedLog);
-    
-    let updatedAnagrafica = project.registeredResources || [];
-    if (removeFromAnagrafica && resourceToRemove.registeredResourceId) {
-        updatedAnagrafica = updatedAnagrafica.filter(rr => rr.id !== resourceToRemove.registeredResourceId);
-        setProject({...project, registeredResources: updatedAnagrafica });
+    if (removeFromAnagrafica) {
+        if (!resourceToRemove.registeredResourceId) {
+            toast({ variant: 'destructive', title: "Errore", description: "Impossibile eliminare dall'anagrafica una risorsa non registrata." });
+            return;
+        }
+        setIsSaving(true);
+        try {
+            await deleteResourceFromAnagraficaAndLogs(project.id, resourceToRemove.registeredResourceId);
+            toast({ title: "Risorsa Eliminata", description: "La risorsa è stata rimossa dall'anagrafica e da tutti i log." });
+            await fetchData(project.id, dateString); // Refetch everything
+        } catch (error) {
+            console.error("Failed to delete resource from anagrafica and logs:", error);
+            toast({ variant: 'destructive', title: "Errore", description: "Impossibile completare l'eliminazione." });
+        } finally {
+            setIsSaving(false);
+        }
+    } else {
+        // Just remove from today's log
+        const updatedLog = {
+            ...dailyLog,
+            resources: dailyLog.resources.filter(r => r.id !== resourceId),
+        };
+        setDailyLog(updatedLog);
+        await handleSave(updatedLog, project.registeredResources);
     }
-
-    // Save immediately to persist changes
-    await handleSave(updatedLog, updatedAnagrafica);
-
-  }, [dailyLog, project, handleSave]);
+  }, [dailyLog, project, handleSave, toast, fetchData, dateString]);
 
 
   if (isLoading || !project || !dailyLog) {
