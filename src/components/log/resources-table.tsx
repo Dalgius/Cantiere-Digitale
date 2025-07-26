@@ -255,7 +255,10 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
             <TableRow>
               <TableHead>Tipo</TableHead>
               <TableHead>Descrizione</TableHead>
-              <TableHead className="text-right">Q.tà</TableHead>
+              <TableHead>Nome/Modello</TableHead>
+              <TableHead>Impresa</TableHead>
+              <TableHead className="text-center">Q.tà</TableHead>
+              <TableHead>Note</TableHead>
               <TableHead className="w-[100px] text-right"></TableHead>
             </TableRow>
           </TableHeader>
@@ -268,12 +271,19 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
                   </Badge>
                 </TableCell>
                 <TableCell className="font-medium">
-                    <div>{resource.description} - <strong>{resource.name}</strong></div>
-                    {resource.company && <p className="text-xs text-muted-foreground font-normal">{resource.company}</p>}
-                    {resource.notes && <p className="text-xs text-muted-foreground font-normal italic">{resource.notes}</p>}
+                    {resource.description}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="font-bold">
+                    {resource.name}
+                </TableCell>
+                <TableCell>
+                    {resource.company || '-'}
+                </TableCell>
+                <TableCell className="text-center">
                     {resource.type === 'Macchinario/Mezzo' ? resource.quantity : '-'}
+                </TableCell>
+                <TableCell className="text-sm text-muted-foreground italic">
+                    {resource.notes || '-'}
                 </TableCell>
                 <TableCell className="text-right">
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => handleOpenForm(resource)} disabled={isDisabled}>
@@ -286,7 +296,7 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
               </TableRow>
             )) : (
                 <TableRow>
-                    <TableCell colSpan={4} className="text-center h-24">Nessuna risorsa registrata.</TableCell>
+                    <TableCell colSpan={7} className="text-center h-24">Nessuna risorsa registrata.</TableCell>
                 </TableRow>
              )}
           </TableBody>
