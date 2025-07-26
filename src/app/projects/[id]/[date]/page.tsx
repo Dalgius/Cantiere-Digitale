@@ -62,9 +62,6 @@ function PageLoader() {
 function ActionsCard({ onSave, onExport, isSaving, isExporting }: { onSave: () => void, onExport: () => void, isSaving: boolean, isExporting: boolean }) {
     return (
         <Card>
-            <CardHeader className="p-3">
-               <CardTitle className="font-headline text-lg">Azioni</CardTitle>
-            </CardHeader>
             <CardContent className="space-y-2 p-3">
                 <Button onClick={onSave} className="w-full" disabled={isSaving || isExporting}>
                     {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -477,7 +474,7 @@ export default function ProjectLogPage() {
     setIsSaving(true);
     try {
       const { id, ...dataToSave } = currentLog;
-      await saveDailyLog(projectId, dataToSave, newRegisteredResources ?? project.registeredResources);
+      await saveDailyLog(projectId, dataToSave, newRegisteredResources ?? project.registeredResources ?? []);
       toast({
         title: "Dati Salvati",
         description: "Le informazioni della giornata sono state salvate con successo.",
