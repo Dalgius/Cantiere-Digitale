@@ -78,18 +78,29 @@ function ResourceForm({ resource, onSave, onClose, registeredResources }: Resour
       setDescription(selected.description);
       setName(selected.name);
       setCompany(selected.company || '');
+      setQuantity(1); // Reset quantity to 1 when selecting from anagrafica
     }
   };
 
   const handleSave = () => {
-    if (!type || !description.trim() || !name.trim() || quantity <= 0) {
+    if (!type || !description.trim() || !name.trim()) {
       toast({
         variant: 'destructive',
         title: 'Campi obbligatori',
-        description: 'Tipo, descrizione, nome/modello e quantità sono richiesti.',
+        description: 'Tipo, descrizione e nome/modello sono richiesti.',
       });
       return;
     }
+
+    if (type === 'Macchinario/Mezzo' && quantity <= 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Quantità non valida',
+        description: 'La quantità per un macchinario deve essere almeno 1.',
+      });
+      return;
+    }
+
 
     const commonData = {
       registeredResourceId: selectedRegisteredId,
@@ -97,7 +108,7 @@ function ResourceForm({ resource, onSave, onClose, registeredResources }: Resour
       description,
       name,
       company,
-      quantity,
+      quantity: type === 'Manodopera' ? 1 : quantity, // Force quantity to 1 for Manodopera
       notes,
     };
     
@@ -178,13 +189,17 @@ function ResourceForm({ resource, onSave, onClose, registeredResources }: Resour
           <Label htmlFor="company" className="text-right">Impresa</Label>
           <Input id="company" name="company" value={company} onChange={(e) => setCompany(e.target.value)} placeholder="(Opzionale)" className="col-span-3" />
         </div>
-        <div className="grid grid-cols-4 items-center gap-4">
-          <Label htmlFor="quantity" className="text-right">Quantità</Label>
-          <Input id="quantity" name="quantity" type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min="1" className="col-span-3" />
-        </div>
+        
+        {type === 'Macchinario/Mezzo' && (
+            <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="quantity" className="text-right">Quantità</Label>
+                <Input id="quantity" name="quantity" type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min="1" className="col-span-3" />
+            </div>
+        )}
+
         <div className="grid grid-cols-4 items-center gap-4">
           <Label htmlFor="notes" className="text-right">Note</Label>
-          <Textarea id="notes" name="notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="col-span-3" />
+          <Textarea id="notes" name="notes" value={notes} onChange={(e) => setNotes(e.target.value)} className="col-span-3" placeholder="Note aggiuntive (opzionale)" />
         </div>
       </div>
       <DialogFooter>
@@ -257,7 +272,9 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
                     {resource.company && <p className="text-xs text-muted-foreground font-normal">{resource.company}</p>}
                     {resource.notes && <p className="text-xs text-muted-foreground font-normal italic">{resource.notes}</p>}
                 </TableCell>
-                <TableCell className="text-right">{resource.quantity}</TableCell>
+                <TableCell className="text-right">
+                    {resource.type === 'Macchinario/Mezzo' ? resource.quantity : '-'}
+                </TableCell>
                 <TableCell className="text-right">
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={() => handleOpenForm(resource)} disabled={isDisabled}>
                         <Pencil className="h-4 w-4" />
@@ -301,7 +318,7 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
             <AlertDialogDescription>
               Vuoi eliminare la risorsa <span className="font-bold">"{resourceToDelete?.description} - {resourceToDelete?.name}"</span> solo da questo log giornaliero, o anche dall'anagrafica del progetto?
               <br/><br/>
-              <span className="text-destructive font-medium">L'eliminazione dall'anagrafica è permanente.</span>
+              <span className="text-destructive font-medium">L'eliminazione dall'anagrafica è permanente e rimuoverà la risorsa da tutti i log.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col sm:flex-col sm:items-stretch gap-2">
