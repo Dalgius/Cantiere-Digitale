@@ -27,7 +27,6 @@ import html2canvas from 'html2canvas';
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
-import { RegisteredResourcesCard } from "@/components/log/registered-resources-card";
 
 
 function PageLoader() {
@@ -471,14 +470,14 @@ export default function ProjectLogPage() {
     }
   }, [projectId, dateString, fetchData]);
   
-  const handleSave = async (logToSave?: DailyLog) => {
+  const handleSave = useCallback(async (logToSave?: DailyLog) => {
     const currentLog = logToSave || dailyLog;
-    if (!currentLog || !projectId) return;
+    if (!currentLog || !projectId || !project) return;
     
     setIsSaving(true);
     try {
       const { id, ...dataToSave } = currentLog;
-      await saveDailyLog(projectId, dataToSave);
+      await saveDailyLog(projectId, dataToSave, project.registeredResources || []);
       toast({
         title: "Dati Salvati",
         description: "Le informazioni della giornata sono state salvate con successo.",
@@ -495,7 +494,7 @@ export default function ProjectLogPage() {
     } finally {
       setIsSaving(false);
     }
-  }
+  }, [dailyLog, projectId, project, toast, fetchData, dateString])
 
 const handleExportToPDF = async () => {
   if (!project || !dailyLog) return;
@@ -681,7 +680,33 @@ const handleExportToPDF = async () => {
     });
   }, []);
 
+  const updateResource = useCallback((updatedResource: Resource) => {
+    setDailyLog(prevLog => {
+      if (!prevLog) return null;
+      return {
+        ...prevLog,
+        resources: prevLog.resources.map(r => r.id === updatedResource.id ? updatedResource : r),
+      };
+    });
+     if (project && updatedResource.registeredResourceId) {
+        const updatedRegisteredResources = (project.registeredResources || []).map(rr => 
+            rr.id === updatedResource.registeredResourceId 
+            ? {
+                id: rr.id,
+                type: updatedResource.type,
+                description: updatedResource.description,
+                name: updatedResource.name,
+                company: updatedResource.company
+              }
+            : rr
+        );
+        setProject({...project, registeredResources: updatedRegisteredResources});
+    }
+  }, [project]);
+
+
   const removeAnnotation = useCallback(async (annotationId: string) => {
+    if (!dailyLog) return;
     const annotationToRemove = dailyLog?.annotations.find(a => a.id === annotationId);
     if (!annotationToRemove) return;
 
@@ -720,68 +745,10 @@ const handleExportToPDF = async () => {
     };
     setDailyLog(updatedLog);
     
-    // If the log becomes empty, save it immediately (which will delete it)
     if (updatedLog.annotations.length === 0 && updatedLog.resources.length === 0) {
         await handleSave(updatedLog);
     }
   }, [dailyLog, handleSave]);
-  
-  const handleRegisteredResourcesUpdate = async (updatedAnagrafica: RegisteredResource[]) => {
-    if (!project || !dailyLog) return;
-    try {
-      // 1. Salva l'anagrafica aggiornata nel DB
-      await updateProject(project.id, { registeredResources: updatedAnagrafica });
-      
-      // 2. Aggiorna lo stato locale del progetto
-      const updatedProject = { ...project, registeredResources: updatedAnagrafica };
-      setProject(updatedProject);
-      
-      // 3. Sincronizza le risorse del log giornaliero con l'anagrafica
-      let logWasModified = false;
-      const updatedDailyResources = dailyLog.resources.map(dailyResource => {
-        // Trova la risorsa corrispondente nell'anagrafica aggiornata
-        const anagraficaMatch = updatedAnagrafica.find(
-          anagraficaResource => anagraficaResource.id === dailyResource.registeredResourceId
-        );
-
-        // Se c'è una corrispondenza e i dati sono diversi, aggiorna la risorsa giornaliera
-        if (anagraficaMatch && (
-            dailyResource.description !== anagraficaMatch.description ||
-            dailyResource.name !== anagraficaMatch.name ||
-            dailyResource.company !== anagraficaMatch.company
-          )) {
-            logWasModified = true;
-            return {
-              ...dailyResource,
-              description: anagraficaMatch.description,
-              name: anagraficaMatch.name,
-              company: anagraficaMatch.company,
-            };
-          }
-        return dailyResource;
-      });
-
-      // 4. Se il log è stato modificato, aggiorna lo stato locale e salva
-      if (logWasModified) {
-        const updatedLog = { ...dailyLog, resources: updatedDailyResources };
-        setDailyLog(updatedLog);
-        // Salva le modifiche in background senza bloccare l'UI
-        handleSave(updatedLog);
-      }
-
-      toast({
-          title: "Anagrafica Aggiornata",
-          description: "L'elenco delle risorse è stato salvato.",
-      });
-    } catch (error) {
-        console.error("Failed to update registered resources:", error);
-        toast({
-            variant: "destructive",
-            title: "Errore",
-            description: "Impossibile aggiornare l'anagrafica.",
-        });
-    }
-  };
 
 
   if (isLoading || !project || !dailyLog) {
@@ -815,11 +782,6 @@ const handleExportToPDF = async () => {
               </CardHeader>
              </Card>
             <DailyLogNav projectLogs={projectLogs} projectId={project.id} activeDate={dailyLog.date} />
-            <RegisteredResourcesCard 
-                projectId={project.id}
-                resources={project.registeredResources || []}
-                onResourcesUpdated={handleRegisteredResourcesUpdate}
-             />
              <div className="hidden lg:block">
                 <ActionsCard {...actionHandlers} />
              </div>
@@ -863,6 +825,7 @@ const handleExportToPDF = async () => {
                 resources={dailyLog.resources}
                 registeredResources={project.registeredResources || []} 
                 onAddResource={addResource} 
+                onUpdateResource={updateResource}
                 onRemoveResource={removeResource}
                 isDisabled={false} 
             />
@@ -878,3 +841,5 @@ const handleExportToPDF = async () => {
     </div>
   );
 }
+
+    

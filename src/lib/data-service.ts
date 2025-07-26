@@ -3,7 +3,7 @@
 'use server';
 
 import { db, Timestamp } from '@/lib/firebase';
-import type { DailyLog, Project, RegisteredResource } from '@/lib/types';
+import type { DailyLog, Project, RegisteredResource, Resource } from '@/lib/types';
 import { collection, doc, getDoc, getDocs, setDoc, addDoc, deleteDoc, query, where, orderBy, limit, updateDoc, arrayUnion } from 'firebase/firestore';
 import { stakeholders } from './data';
 
@@ -154,44 +154,59 @@ export async function getDailyLog(projectId: string, date: string): Promise<Dail
 }
 
 // Funzione per aggiornare l'anagrafica delle risorse
-async function updateRegisteredResources(projectId: string, logData: Omit<DailyLog, 'id'>) {
-    if (!logData.resources || logData.resources.length === 0) return;
+async function updateRegisteredResources(projectId: string, resources: Resource[], existingRegistered: RegisteredResource[]) {
+    if (!resources || resources.length === 0) return;
 
     const projectRef = doc(db, 'projects', projectId);
-    const projectSnap = await getDoc(projectRef);
-
-    if (!projectSnap.exists()) {
-        console.error(`Project ${projectId} not found for updating resources.`);
-        return;
-    }
-
-    const projectData = projectSnap.data() as Project;
-    const existingResources = projectData.registeredResources || [];
     
-    // Crea un set di identificatori unici per le risorse esistenti per un controllo rapido
-    const existingResourceIds = new Set(existingResources.map(r => `${r.type}-${r.description}-${r.name}-${r.company || ''}`.toLowerCase()));
+    // Use a mutable copy for this operation
+    const currentAnagrafica = [...existingRegistered];
+    let anagraficaWasModified = false;
 
-    // Trova le nuove risorse da aggiungere
-    const newResourcesToAdd: RegisteredResource[] = [];
-    logData.resources.forEach(res => {
-        const resourceId = `${res.type}-${res.description}-${res.name}-${res.company || ''}`.toLowerCase();
-        if (!existingResourceIds.has(resourceId)) {
-            newResourcesToAdd.push({
+    resources.forEach(res => {
+        if (res.registeredResourceId) {
+            // This resource is already in the anagrafica, check if it needs an update.
+            const index = currentAnagrafica.findIndex(rr => rr.id === res.registeredResourceId);
+            if (index !== -1) {
+                const anagraficaRes = currentAnagrafica[index];
+                // Check if any field is different
+                if (anagraficaRes.description !== res.description ||
+                    anagraficaRes.name !== res.name ||
+                    anagraficaRes.company !== res.company ||
+                    anagraficaRes.type !== res.type)
+                {
+                    // Update the local copy
+                    currentAnagrafica[index] = {
+                        id: anagraficaRes.id,
+                        type: res.type,
+                        description: res.description,
+                        name: res.name,
+                        company: res.company,
+                    };
+                    anagraficaWasModified = true;
+                }
+            }
+        } else {
+             // This is a new resource, not yet in the anagrafica. Add it.
+             const newRegisteredResource: RegisteredResource = {
                 id: `reg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
                 type: res.type,
                 description: res.description,
                 name: res.name,
                 company: res.company,
-            });
-            // Aggiungi al set per evitare di aggiungere duplicati dalla stessa richiesta di log
-            existingResourceIds.add(resourceId);
+             };
+             currentAnagrafica.push(newRegisteredResource);
+             // We also need to give the resource in the log its new ID
+             res.registeredResourceId = newRegisteredResource.id;
+             anagraficaWasModified = true;
         }
     });
 
-    // Se ci sono nuove risorse, aggiorna il documento del progetto
-    if (newResourcesToAdd.length > 0) {
-        await updateDoc(projectRef, {
-            registeredResources: arrayUnion(...newResourcesToAdd)
+
+    // If the anagrafica has changed, update it in Firestore
+    if (anagraficaWasModified) {
+         await updateDoc(projectRef, {
+            registeredResources: currentAnagrafica
         });
     }
 }
@@ -207,7 +222,7 @@ export async function updateProject(id: string, data: Partial<Project>): Promise
 }
 
 
-export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'id'>): Promise<void> {
+export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'id'>, existingRegistered: RegisteredResource[]): Promise<void> {
     const logId = new Date(logData.date).toISOString().split('T')[0];
     const logRef = doc(db, `projects/${projectId}/dailyLogs`, logId);
     
@@ -222,6 +237,9 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
         }
         return;
     }
+
+    // First, sync the anagrafica. This function will mutate logData.resources to add new IDs.
+    await updateRegisteredResources(projectId, logData.resources, existingRegistered);
     
     // Create a safe, serializable object for Firestore
     const logToSave = {
@@ -231,15 +249,13 @@ export async function saveDailyLog(projectId: string, logData: Omit<DailyLog, 'i
         ...anno,
         timestamp: anno.timestamp ? Timestamp.fromDate(new Date(anno.timestamp)) : Timestamp.now(),
       })),
+      resources: logData.resources, // Now contains the updated registeredResourceIds
     };
 
     await setDoc(logRef, logToSave, { merge: true });
 
-    // Update registered resources and last log date in parallel
-    await Promise.all([
-        updateDoc(doc(db, 'projects', projectId), { lastLogDate: logToSave.date }),
-        updateRegisteredResources(projectId, logData)
-    ]);
+    // Update last log date
+    await updateDoc(doc(db, 'projects', projectId), { lastLogDate: logToSave.date });
 }
 
 
@@ -266,3 +282,5 @@ export async function deleteProject(projectId: string): Promise<void> {
     // Note: This doesn't delete subcollections. A Cloud Function would be needed for that in production.
     await deleteDoc(projectRef);
 }
+
+    
