@@ -168,7 +168,7 @@ function ResourceForm({ resource, onSave, onClose, registeredResources }: Resour
         </div>
         <div className="grid grid-cols-4 items-center gap-4">
           <Label htmlFor="description" className="text-right">Descrizione</Label>
-          <Input id="description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" placeholder='Es. "Operaio Specializzato o Escavatore"' />
+          <Input id="description" name="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" placeholder='Es. "Operaio specializzato o Escavatore"' />
         </div>
         <div className="grid grid-cols-4 items-center gap-4">
           <Label htmlFor="name" className="text-right">Nome/Modello</Label>
@@ -301,20 +301,20 @@ export function ResourcesTable({ resources, registeredResources, onAddResource, 
             <AlertDialogDescription>
               Vuoi eliminare la risorsa <span className="font-bold">"{resourceToDelete?.description} - {resourceToDelete?.name}"</span> solo da questo log giornaliero, o anche dall'anagrafica del progetto?
               <br/><br/>
-              <span className="text-destructive">L'eliminazione dall'anagrafica è permanente.</span>
+              <span className="text-destructive font-medium">L'eliminazione dall'anagrafica è permanente.</span>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2">
-            <AlertDialogCancel onClick={() => setResourceToDelete(null)}>Annulla</AlertDialogCancel>
-            <Button variant="outline" onClick={() => handleConfirmDelete(false)}>
-              Elimina solo da oggi
-            </Button>
+          <AlertDialogFooter className="flex-col sm:flex-col sm:items-stretch gap-2">
             <AlertDialogAction 
               onClick={() => handleConfirmDelete(true)} 
               className="bg-destructive hover:bg-destructive/90"
             >
               Elimina anche da Anagrafica
             </AlertDialogAction>
+            <Button variant="outline" onClick={() => handleConfirmDelete(false)}>
+              Elimina solo da oggi
+            </Button>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
